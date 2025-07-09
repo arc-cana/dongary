@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR 스탬프 프로그램</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <h1>QR 스탬프 프로그램</h1>
+
+        <div class="stamp-grid">
+            <div class="class-item">
+                <div class="circle">1반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">2반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">3반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">4반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">5반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">6반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">7반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">8반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">9반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+            <div class="class-item">
+                <div class="circle">10반</div>
+                <img src="images/stamp.png" alt="스탬프" class="stamp hidden">
+            </div>
+        </div>
+
+        <div class="qr-scanner-area">
+            <video id="qr-video" width="320" height="240" style="border: 1px solid gray;"></video>
+            <div id="qr-result">QR 코드를 스캔 중...</div>
+        </div>
+
+        <div class="buttons">
+            <button id="reset-button">스탬프 초기화</button>
+            <button id="admin-mode-button">관리자 모드</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
