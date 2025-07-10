@@ -63,6 +63,7 @@ h1 {
     height: 80px;
     opacity: 1; /* 투명도 */
     transition: opacity 0.3s; /* 투명도 변화 시 부드러운 전환 */
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 .stamp.hidden {
