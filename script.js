@@ -119,7 +119,7 @@ function processQRData(data) {
 
     if (!data.startsWith(VALID_QR_PREFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (접두사 불일치)';
-        console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
+        console.warn('유효하지 않은 QR 코드 스캔', data);
         return;
     }
 
