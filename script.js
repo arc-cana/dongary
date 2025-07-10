@@ -214,7 +214,7 @@ function showAdminControls() {
     exitAdminButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitAdminButton);
 
-    qrResult.textContent = '관리자 모드: 원하는 반을 선택하거나 10반 버튼으로 마스터 기능을 활성화하세요.';
+    qrResult.textContent = '관리자 모드: 원하는 반을 선택하세요.';
     qrVideo.pause(); // 관리자 모드에서는 스캔 중지
 }
 
