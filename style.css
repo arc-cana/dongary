@@ -6,23 +6,23 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-color: #f0f0f0; /* 배경 이미지 없을 때 대비 색상 */
+    /* background-color: #f0f0f0; /* 배경 이미지 없을 때 대비 색상 - 이 줄은 삭제하거나 주석 처리하세요 */
 
     /* 배경 이미지 스타일 */
     background-image: url('images/background.jpg'); /* 여기에 여러분의 이미지 파일 경로를 정확히 넣어주세요! */
-                                            /* 예: url('images/background.jpg') */
+                                                    /* 예: url('images/background.jpg') */
     background-size: cover; /* 이미지가 화면을 꽉 채우도록 설정 */
     background-repeat: no-repeat; /* 이미지가 반복되지 않도록 */
     background-position: center center; /* 이미지를 화면 중앙에 배치 */
     background-attachment: fixed; /* 스크롤해도 배경 이미지가 고정되도록 */
-    color: #333; /* 기본 글자색 */
+    color: #f9f9f9; /* 기본 글자색 */
 }
 
 .container {
-    background-color: rgba(255, 255, 255, 0.9); /* 컨테이너 배경을 반투명 흰색으로 */
+    background-color: rgba(0, 0, 0, 0.9); /* 컨테이너 배경을 반투명 흰색으로 */
     padding: 30px;
     border-radius: 15px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 16px rgba(118, 104, 104, 0.2);
     text-align: center;
     max-width: 90%; /* 최대 너비를 90%로 설정하여 모바일에서도 보기 좋게 */
     width: 800px; /* 데스크톱 기준 최대 너비 */
@@ -77,19 +77,52 @@ h1 {
     border-radius: 10px;
 }
 
+/* 각 스탬프 칸 (이미지와 텍스트를 포함) */
+.stamp-item {
+    display: flex;
+    flex-direction: column; /* 스탬프와 텍스트를 세로로 쌓음 */
+    justify-content: center;
+    align-items: center;
+    width: 100px; /* 스탬프 아이템 하나의 너비 */
+    height: 120px; /* 스탬프 아이템 하나의 높이 (스탬프+텍스트 공간) */
+    margin: 8px; /* 스탬프 아이템 사이 간격 */
+    position: relative; /* 스탬프 이미지의 absolute 포지셔닝을 위한 기준 */
+    border: 1px solid #ccc; /* 각 칸의 테두리 (선택 사항) */
+    border-radius: 8px; /* 테두리 둥글게 (선택 사항) */
+    background-color: #f9f9f9; /* 칸 배경색 (선택 사항) */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 그림자 (선택 사항) */
+}
+
 /* 개별 스탬프 이미지 스타일 */
 .stamp {
-    width: 90px; /* 스탬프 하나의 너비 (조절 가능, 보통 80px ~ 120px) */
+    width: 90px; /* 스탬프 하나의 너비 */
     height: 90px; /* 스탬프 하나의 높이 */
     object-fit: contain; /* 이미지 비율 유지하며 크기 조절 */
-    margin: 8px; /* 스탬프 사이 간격 (조절 가능) */
     transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out; /* 효과 추가 */
     cursor: default; /* 마우스 오버 시 커서 모양 변경 방지 */
+    position: absolute; /* stamp-item 내에서 절대 위치 */
+    top: 5px; /* 상단에서 약간 떨어뜨림 */
+    left: 50%;
+    transform: translateX(-50%); /* 가로 중앙 정렬 */
 }
+
+/* 반 번호 텍스트 스타일 */
+.class-label {
+    position: absolute; /* stamp-item 내에서 절대 위치 */
+    bottom: 5px; /* 하단에서 약간 떨어뜨림 */
+    font-size: 1em; /* 텍스트 크기 */
+    font-weight: bold;
+    color: #0056b3; /* 텍스트 색상 */
+    text-align: center;
+    width: 100%; /* 부모 너비에 맞춤 */
+    margin: 0;
+    padding: 0;
+}
+
 
 /* 스탬프가 찍혔을 때 보일 스타일 (선택 사항) */
 .stamp:not(.hidden) {
-    transform: scale(1.05); /* 찍혔을 때 약간 확대 */
+    transform: translateX(-50%) scale(1.05); /* 찍혔을 때 약간 확대 및 중앙 정렬 유지 */
     opacity: 1; /* 찍혔을 때 완전히 보임 */
 }
 
@@ -135,28 +168,22 @@ h1 {
     transform: translateY(-2px); /* 호버 시 약간 위로 올라오는 효과 */
 }
 
-/* 10반 스탬프 제어 버튼 (마스터 키 활성화용) 스타일 - 선택 사항 */
-.class-control-button[data-class="10"] {
-    background-color: #218838; /* 주황색으로 강조 */
-}
-.class-control-button[data-class="10"]:hover {
-    background-color: #218838;
-}
+
 
 
 /* 마스터 모드 버튼 스타일 */
 .controls button:last-child { /* '관리자/마스터 모드 종료' 버튼 */
-    background-color: #f44336; /* 빨간색 계열 */
+    background-color: #28a745; /* 빨간색 계열 */
 }
 .controls button:last-child:hover {
-    background-color: #da190b;
+    background-color: #218838
 }
 
 .controls button:nth-last-child(2) { /* '모든 스탬프 초기화' 버튼 (마스터 모드에서) */
-    background-color: #dc3545; /* 좀 더 진한 빨간색 */
+    background-color: #28a745; /* 좀 더 진한 빨간색 */
 }
 .controls button:nth-last-child(2):hover {
-    background-color: #c82333;
+    background-color: #218838;
 }
 
 .controls button:first-child:not(.class-control-button) { /* '모든 스탬프 채우기' 버튼 (마스터 모드에서) */
@@ -178,10 +205,17 @@ h1 {
     .qr-video-container {
         height: 250px;
     }
+    .stamp-item { /* 모바일에서 스탬프 아이템 크기 약간 줄임 */
+        width: 80px;
+        height: 100px;
+        margin: 5px;
+    }
     .stamp {
         width: 70px; /* 모바일에서 스탬프 크기 약간 줄임 */
         height: 70px;
-        margin: 5px;
+    }
+    .class-label {
+        font-size: 0.9em;
     }
     .controls button {
         font-size: 1em;
@@ -202,10 +236,17 @@ h1 {
     .qr-video-container {
         height: 200px;
     }
+    .stamp-item { /* 더 작은 모바일에서 스탬프 아이템 크기 더 줄임 */
+        width: 70px;
+        height: 90px;
+        margin: 4px;
+    }
     .stamp {
         width: 60px; /* 더 작은 모바일에서 스탬프 크기 더 줄임 */
         height: 60px;
-        margin: 4px;
+    }
+    .class-label {
+        font-size: 0.8em;
     }
     .controls button {
         flex: 1 1 100%; /* 가장 작은 화면에서는 한 줄에 1개씩 */
