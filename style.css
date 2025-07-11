@@ -173,17 +173,17 @@ h1 {
 
 /* 마스터 모드 버튼 스타일 */
 .controls button:last-child { /* '관리자/마스터 모드 종료' 버튼 */
-    background-color: #28a745; /* 빨간색 계열 */
+    background-color: #007bff; /* 빨간색 계열 */
 }
 .controls button:last-child:hover {
-    background-color: #218838
+    background-color: #0056b3
 }
 
 .controls button:nth-last-child(2) { /* '모든 스탬프 초기화' 버튼 (마스터 모드에서) */
-    background-color: #28a745; /* 좀 더 진한 빨간색 */
+    background-color: #007bff; /* 좀 더 진한 빨간색 */
 }
 .controls button:nth-last-child(2):hover {
-    background-color: #218838;
+    background-color: #0056b3;
 }
 
 .controls button:first-child:not(.class-control-button) { /* '모든 스탬프 채우기' 버튼 (마스터 모드에서) */

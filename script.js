@@ -114,8 +114,8 @@ function processQRData(data) {
     console.log("스캔된 원본 QR 데이터:", data);
 
     if (!data.startsWith(VALID_QR_PREFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (접두사 불일치)';
-        console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
+        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다.';
+        console.warn('유효하지 않은 QR 코드 스캔', data);
         return;
     }
 
@@ -210,7 +210,7 @@ function showAdminControls() {
     exitAdminButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitAdminButton);
 
-    qrResult.textContent = '관리자 모드: 원하는 반을 선택하거나 10반 버튼으로 마스터 기능을 활성화하세요.';
+    qrResult.textContent = '관리자 모드: 원하는 반을 선택하세요.';
     qrVideo.pause(); // 관리자 모드에서는 스캔 중지
 }
 
