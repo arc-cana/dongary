@@ -1,3 +1,4 @@
+
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
@@ -12,22 +13,17 @@ const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A"; // QR 코드 생성 시 사�
 
 // --- 관리자 모드 관련 설정 ---
 const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN"; // **관리자 모드 활성화용 QR 코드 내용 (비밀!)**
-// **ADMIN_PASSWORD 변수는 이제 삭제되었습니다.**
+// ADMIN_PASSWORD 변수는 이제 없습니다. QR 스캔만으로 진입.
 
 // 마스터 키와 각 반의 비밀번호를 설정하세요! (4자리 숫자)
-const MASTER_KEY = "8621"; // **마스터 키 (4자리 숫자) - 이 값을 원하는 값으로 변경하세요!**
-const CLASS_PASSWORDS = { // **각 반별 비밀번호 (4자리 숫자) - 이 값들을 원하는 값으로 변경하세요!**
-   '1': "1720",
-    '2': "2489",
-    '3': "3549",
-    '4': "4663",
-    '5': "5278",
-    '6': "6091",
-    '7': "7367",
-    '8': "8691",
-    '9': "9187",
-    '10': "0267" 
+const MASTER_KEY = "1234"; // **마스터 키 (4자리 숫자) - 10반 제어 버튼에서 입력**
+const CLASS_PASSWORDS = { // **각 반별 비밀번호 (4자리 숫자) - 20개 반 모두 설정**
+    '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
+    '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
+    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005",
+    '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010"
 };
+const TOTAL_CLASSES = 20; // 총 반 개수 설정
 
 let isAdminMode = false; // 관리자 모드 상태 변수
 let isMasterMode = false; // 마스터 모드 상태 변수 (10반 비밀번호 칸에서 마스터 키 입력 시 활성화)
@@ -118,8 +114,8 @@ function processQRData(data) {
     console.log("스캔된 원본 QR 데이터:", data);
 
     if (!data.startsWith(VALID_QR_PREFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. ';
-        console.warn('유효하지 않은 QR 코드 스캔', data);
+        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (접두사 불일치)';
+        console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
         return;
     }
 
@@ -141,7 +137,7 @@ function processQRData(data) {
     if (classNumberMatch && classNumberMatch[1]) {
         const classNumber = parseInt(classNumberMatch[1]);
 
-        if (classNumber >= 1 && classNumber <= 10) {
+        if (classNumber >= 1 && classNumber <= TOTAL_CLASSES) { // 총 반 개수 반영
             const stampIndex = classNumber - 1; 
 
             if (stampImages[stampIndex]) {
@@ -158,7 +154,7 @@ function processQRData(data) {
                 qrResult.textContent = '스탬프 요소를 찾을 수 없습니다. (HTML 구조 확인)';
             }
         } else {
-            qrResult.textContent = '⛔ 유효하지 않은 반 정보입니다. (1~10반만 가능)';
+            qrResult.textContent = `⛔ 유효하지 않은 반 정보입니다. (1~${TOTAL_CLASSES}반만 가능)`; // 메시지 수정
         }
     } else {
         qrResult.textContent = '❓ 알 수 없는 QR 코드 형식입니다. (예: "1반" 형식이어야 함)';
@@ -171,7 +167,7 @@ function resetAllStamps() {
         stampImages.forEach(stamp => {
             stamp.classList.add('hidden');
         });
-        for (let i = 1; i <= 10; i++) {
+        for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
             localStorage.removeItem(`class${i}_stamped`);
         }
         qrResult.textContent = '모든 스탬프가 초기화되었습니다.';
@@ -181,7 +177,7 @@ function resetAllStamps() {
 
 // --- 페이지 로드 시 스탬프 상태 복원 함수 ---
 function loadStampState() {
-    for (let i = 1; i <= 10; i++) {
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
         if (localStorage.getItem(`class${i}_stamped`) === 'true') {
             const stampIndex = i - 1;
             if (stampImages[stampIndex]) {
@@ -198,8 +194,8 @@ function showAdminControls() {
     const controlsDiv = document.querySelector('.controls');
     controlsDiv.innerHTML = ''; // 기존 버튼들 제거 (일반 모드에 버튼이 없으므로 비어있을 것)
 
-    // 각 반 스탬프 제어 버튼 (1반부터 10반까지)
-    for (let i = 1; i <= 10; i++) {
+    // 각 반 스탬프 제어 버튼 (1반부터 TOTAL_CLASSES까지)
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
         const classButton = document.createElement('button');
         classButton.textContent = `${i}반 스탬프 제어`;
         classButton.classList.add('class-control-button');
@@ -214,7 +210,7 @@ function showAdminControls() {
     exitAdminButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitAdminButton);
 
-    qrResult.textContent = '관리자 모드: 원하는 반을 선택하세요.';
+    qrResult.textContent = '관리자 모드: 원하는 반을 선택하거나 10반 버튼으로 마스터 기능을 활성화하세요.';
     qrVideo.pause(); // 관리자 모드에서는 스캔 중지
 }
 
@@ -251,7 +247,7 @@ function handleClassStampControl(event) {
     const classNumber = event.target.dataset.class;
     const password = prompt(`${classNumber}반 비밀번호를 입력하세요:`);
 
-    // 10반 버튼이고 입력된 비밀번호가 마스터 키와 일치하는 경우
+    // 10반 버튼이고 입력된 비밀번호가 마스터 키와 일치하는 경우 (총 20반이 되어도 10반이 마스터 키 활성화)
     if (classNumber === '10' && password === MASTER_KEY) {
         showMasterControls(); // 마스터 컨트롤 화면으로 전환
         return; // 함수 종료
@@ -323,7 +319,7 @@ window.addEventListener('load', () => {
     startWebcam();
 });
 
-// 기존 resetButton 관련 이벤트 리스너는 이제 필요 없습니다.
+// 기존 일반 사용자용 초기화 버튼 (resetButton) 관련 리스너는 HTML에서 버튼이 제거되었으므로 필요 없습니다.
 
 
 // --- jsQR 라이브러리 동적 로드 ---

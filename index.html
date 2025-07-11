@@ -3,63 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR 스탬프 프로그램</title>
+    <title>동아리 발표회</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>우리 반 스탬프</h1>
-        
-        <div class="qr-scanner-area">
-            <video id="qr-video" autoplay playsinline></video>
-            <div id="qr-result">QR 코드를 스캔 중...</div>
+        <h1>동아리 발표회</h1>
+
+        <div class="qr-video-container">
+            <video id="qr-video" playsinline></video>
+        </div>
+        <p id="qr-result">QR 코드를 스캔 중...</p>
+
+        <div class="stamp-container">
+            <img src="./images/stamp_base.png" alt="1반 스탬프" class="stamp hidden" id="stamp-1">
+            <img src="./images/stamp_base.png" alt="2반 스탬프" class="stamp hidden" id="stamp-2">
+            <img src="./images/stamp_base.png" alt="3반 스탬프" class="stamp hidden" id="stamp-3">
+            <img src="./images/stamp_base.png" alt="4반 스탬프" class="stamp hidden" id="stamp-4">
+            <img src="./images/stamp_base.png" alt="5반 스탬프" class="stamp hidden" id="stamp-5">
+            <img src="./images/stamp_base.png" alt="6반 스탬프" class="stamp hidden" id="stamp-6">
+            <img src="./images/stamp_base.png" alt="7반 스탬프" class="stamp hidden" id="stamp-7">
+            <img src="./images/stamp_base.png" alt="8반 스탬프" class="stamp hidden" id="stamp-8">
+            <img src="./images/stamp_base.png" alt="9반 스탬프" class="stamp hidden" id="stamp-9">
+            <img src="./images/stamp_base.png" alt="10반 스탬프" class="stamp hidden" id="stamp-10">
+            <img src="./images/stamp_base.png" alt="11반 스탬프" class="stamp hidden" id="stamp-11">
+            <img src="./images/stamp_base.png" alt="12반 스탬프" class="stamp hidden" id="stamp-12">
+            <img src="./images/stamp_base.png" alt="13반 스탬프" class="stamp hidden" id="stamp-13">
+            <img src="./images/stamp_base.png" alt="14반 스탬프" class="stamp hidden" id="stamp-14">
+            <img src="./images/stamp_base.png" alt="15반 스탬프" class="stamp hidden" id="stamp-15">
+            <img src="./images/stamp_base.png" alt="16반 스탬프" class="stamp hidden" id="stamp-16">
+            <img src="./images/stamp_base.png" alt="17반 스탬프" class="stamp hidden" id="stamp-17">
+            <img src="./images/stamp_base.png" alt="18반 스탬프" class="stamp hidden" id="stamp-18">
+            <img src="./images/stamp_base.png" alt="19반 스탬프" class="stamp hidden" id="stamp-19">
+            <img src="./images/stamp_base.png" alt="20반 스탬프" class="stamp hidden" id="stamp-20">
         </div>
 
-        <div class="stamp-grid">
-            <div class="class-item">
-                <div class="circle">1반</div>
-                <img src="images/stamp_hidden.png" alt="1반 스탬프" class="stamp hidden" id="stamp1">
-            </div>
-            <div class="class-item">
-                <div class="circle">2반</div>
-                <img src="images/stamp_hidden.png" alt="2반 스탬프" class="stamp hidden" id="stamp2">
-            </div>
-            <div class="class-item">
-                <div class="circle">3반</div>
-                <img src="images/stamp_hidden.png" alt="3반 스탬프" class="stamp hidden" id="stamp3">
-            </div>
-            <div class="class-item">
-                <div class="circle">4반</div>
-                <img src="images/stamp_hidden.png" alt="4반 스탬프" class="stamp hidden" id="stamp4">
-            </div>
-            <div class="class-item">
-                <div class="circle">5반</div>
-                <img src="images/stamp_hidden.png" alt="5반 스탬프" class="stamp hidden" id="stamp5">
-            </div>
-            <div class="class-item">
-                <div class="circle">6반</div>
-                <img src="images/stamp_hidden.png" alt="6반 스탬프" class="stamp hidden" id="stamp6">
-            </div>
-            <div class="class-item">
-                <div class="circle">7반</div>
-                <img src="images/stamp_hidden.png" alt="7반 스탬프" class="stamp hidden" id="stamp7">
-            </div>
-            <div class="class-item">
-                <div class="circle">8반</div>
-                <img src="images/stamp_hidden.png" alt="8반 스탬프" class="stamp hidden" id="stamp8">
-            </div>
-            <div class="class-item">
-                <div class="circle">9반</div>
-                <img src="images/stamp_hidden.png" alt="9반 스탬프" class="stamp hidden" id="stamp9">
-            </div>
-            <div class="class-item">
-                <div class="circle">10반</div>
-                <img src="images/stamp_hidden.png" alt="10반 스탬프" class="stamp hidden" id="stamp10">
-            </div>
-        </div>
-
-        <div class="controls">
-            </div>
+        <div class="controls"></div> 
     </div>
 
     <script src="script.js"></script>
