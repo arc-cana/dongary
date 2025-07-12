@@ -1,106 +1,47 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>동아리 발표회</title>
-    <link rel="stylesheet" href="style.css">
+    <title>급식실 대기 시간 안내</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            text-align: center;
+            padding-top: 100px;
+        }
+        .box {
+            display: inline-block;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .time {
+            font-size: 2em;
+            color: #e74c3c;
+        }
+        .sensor {
+            margin-top: 10px;
+            font-size: 1.2em;
+            color: #555;
+        }
+        .update {
+            margin-top: 20px;
+            color: gray;
+        }
+    </style>
+    <meta http-equiv="refresh" content="5">
 </head>
 <body>
-    <div class="container">
-        <h1>동아리 발표회</h1>
-
-        <div class="qr-video-container">
-            <video id="qr-video" playsinline></video>
-        </div>
-        <p id="qr-result">QR 코드를 스캔 중...</p>
-
-        <div class="stamp-container">
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="1반 스탬프" class="stamp hidden" id="stamp-1">
-                <p class="class-label">1반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="2반 스탬프" class="stamp hidden" id="stamp-2">
-                <p class="class-label">2반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="3반 스탬프" class="stamp hidden" id="stamp-3">
-                <p class="class-label">3반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="4반 스탬프" class="stamp hidden" id="stamp-4">
-                <p class="class-label">4반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="5반 스탬프" class="stamp hidden" id="stamp-5">
-                <p class="class-label">5반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="6반 스탬프" class="stamp hidden" id="stamp-6">
-                <p class="class-label">6반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="7반 스탬프" class="stamp hidden" id="stamp-7">
-                <p class="class-label">7반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="8반 스탬프" class="stamp hidden" id="stamp-8">
-                <p class="class-label">8반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="9반 스탬프" class="stamp hidden" id="stamp-9">
-                <p class="class-label">9반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="10반 스탬프" class="stamp hidden" id="stamp-10">
-                <p class="class-label">10반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="11반 스탬프" class="stamp hidden" id="stamp-11">
-                <p class="class-label">11반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="12반 스탬프" class="stamp hidden" id="stamp-12">
-                <p class="class-label">12반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="13반 스탬프" class="stamp hidden" id="stamp-13">
-                <p class="class-label">13반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="14반 스탬프" class="stamp hidden" id="stamp-14">
-                <p class="class-label">14반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="15반 스탬프" class="stamp hidden" id="stamp-15">
-                <p class="class-label">15반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="16반 스탬프" class="stamp hidden" id="stamp-16">
-                <p class="class-label">16반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="17반 스탬프" class="stamp hidden" id="stamp-17">
-                <p class="class-label">17반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="18반 스탬프" class="stamp hidden" id="stamp-18">
-                <p class="class-label">18반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="19반 스탬프" class="stamp hidden" id="stamp-19">
-                <p class="class-label">19반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="20반 스탬프" class="stamp hidden" id="stamp-20">
-                <p class="class-label">20반</p>
-            </div>
-        </div>
-
-        <div class="controls"></div>
+    <div class="box">
+        {% if info.sensor %}
+            <div class="sensor">감지된 위치: {{ info.sensor }}</div>
+            <div class="time">예상 대기 시간: {{ info.time }}분</div>
+        {% else %}
+            <div class="time">사람이 없습니다</div>
+        {% endif %}
+        <div class="update">최종 업데이트: {{ info.last_updated }}</div>
     </div>
-
-    <script src="script.js"></script>
 </body>
 </html>
