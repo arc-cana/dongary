@@ -1,4 +1,86 @@
+// script.js 파일의 가장 상단에 추가 (기존 코드보다 먼저 실행되도록)
 
+const splashScreen = document.getElementById('splash-screen');
+const mainContent = document.getElementById('main-content');
+const submitInfoBtn = document.getElementById('submitInfoBtn');
+const inputGrade = document.getElementById('inputGrade');
+const inputClass = document.getElementById('inputClass');
+const inputNumber = document.getElementById('inputNumber');
+const inputName = document.getElementById('inputName');
+
+// 학생 정보가 localStorage에 있는지 확인하는 함수
+function checkStudentInfo() {
+    const studentInfo = localStorage.getItem('studentInfo');
+    if (studentInfo) {
+        // 정보가 있으면 초기 화면 숨기고 메인 콘텐츠 표시
+        splashScreen.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        console.log('학생 정보 로드됨:', JSON.parse(studentInfo));
+        // 필요하다면 로드된 정보로 무언가 표시할 수 있습니다.
+        loadStampState(); // 스탬프 상태 로드 (기존 함수)
+    } else {
+        // 정보가 없으면 초기 화면 표시하고 메인 콘텐츠 숨김
+        splashScreen.classList.remove('hidden');
+        mainContent.classList.add('hidden');
+    }
+}
+
+// 정보 제출 버튼 클릭 이벤트 리스너
+submitInfoBtn.addEventListener('click', () => {
+    const grade = inputGrade.value.trim();
+    const sClass = inputClass.value.trim(); // 'class'는 예약어이므로 'sClass' 사용
+    const number = inputNumber.value.trim();
+    const name = inputName.value.trim();
+
+    // 간단한 유효성 검사
+    if (!grade || !sClass || !number || !name) {
+        alert('모든 정보를 입력해주세요.');
+        return;
+    }
+
+    const classNum = parseInt(sClass, 10);
+    const numberNum = parseInt(number, 10);
+
+    if (isNaN(classNum) || classNum < 1 || classNum > 10) {
+        alert('반은 1부터 10 사이의 숫자로 입력해주세요.');
+        return;
+    }
+    if (isNaN(numberNum) || numberNum < 1) {
+        alert('번호는 올바른 숫자로 입력해주세요.');
+        return;
+    }
+    if (isNaN(parseInt(grade, 10)) || parseInt(grade, 10) < 1) {
+        alert('학년은 올바른 숫자로 입력해주세요.');
+        return;
+    }
+
+    const studentInfo = {
+        grade: grade,
+        sClass: sClass, // sClass로 저장
+        number: number,
+        name: name
+    };
+
+    localStorage.setItem('studentInfo', JSON.stringify(studentInfo));
+    alert('정보가 저장되었습니다. 스탬프 화면으로 이동합니다.');
+
+    // 초기 화면 숨기고 메인 콘텐츠 표시
+    splashScreen.classList.add('hidden');
+    mainContent.classList.remove('hidden');
+
+    loadStampState(); // 스탬프 상태 로드 (기존 함수)
+});
+
+// 페이지 로드 시 학생 정보 확인 함수 호출
+checkStudentInfo();
+
+
+// --- 기존 script.js 코드들은 이어서 그대로 두시면 됩니다 ---
+// 예:
+// const TOTAL_CLASSES = 20;
+// const stampImages = document.querySelectorAll('.stamp');
+// const qrResultDiv = document.getElementById('qr-result');
+// ... 등등
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
