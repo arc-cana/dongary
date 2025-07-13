@@ -9,6 +9,7 @@
 </head>
 <body>
     <div id="splash-screen" class="splash-screen">
+        <h2 class="splash-title-text">학번과 이름을 입력해 주세요</h2>
         <div class="input-form-box">
             <div class="input-line">
                 <span class="input-label-text">( </span><input type="number" id="inputGrade" min="1" max="6" placeholder="" class="info-input"><span class="input-label-text"> )학년 ( </span>
@@ -30,70 +31,98 @@
         </div>
         <p id="qr-result">QR 코드를 스캔 중...</p>
 
+        <button id="showLocationGuideBtn" class="location-guide-button">동아리 위치 안내</button>
+
         <div class="stamp-container">
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="코딩 동아리 스탬프" class="stamp hidden" id="stamp-1">
-                <p class="class-label">알고리즘 연구</p> </div>
+                <img src="./images/stamp_base.png" alt="알고리즘 연구 스탬프" class="stamp hidden" id="stamp-1">
+                <p class="class-label">알고리즘 연구</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="수학 동아리 스탬프" class="stamp hidden" id="stamp-2">
-                <p class="class-label">수리 탐구</p> </div>
+                <img src="./images/stamp_base.png" alt="수리 탐구 스탬프" class="stamp hidden" id="stamp-2">
+                <p class="class-label">수리 탐구</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="과학 실험 동아리 스탬프" class="stamp hidden" id="stamp-3">
-                <p class="class-label">융합 과학</p> </div>
+                <img src="./images/stamp_base.png" alt="융합 과학 스탬프" class="stamp hidden" id="stamp-3">
+                <p class="class-label">융합 과학</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="미술 동아리 스탬프" class="stamp hidden" id="stamp-4">
-                <p class="class-label">아트 팩토리</p> </div>
+                <img src="./images/stamp_base.png" alt="아트 팩토리 스탬프" class="stamp hidden" id="stamp-4">
+                <p class="class-label">아트 팩토리</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="밴드 동아리 스탬프" class="stamp hidden" id="stamp-5">
-                <p class="class-label">밴드 포스</p> </div>
+                <img src="./images/stamp_base.png" alt="밴드 포스 스탬프" class="stamp hidden" id="stamp-5">
+                <p class="class-label">밴드 포스</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="댄스 동아리 스탬프" class="stamp hidden" id="stamp-6">
-                <p class="class-label">무브먼트</p> </div>
+                <img src="./images/stamp_base.png" alt="무브먼트 스탬프" class="stamp hidden" id="stamp-6">
+                <p class="class-label">무브먼트</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="영상 제작 동아리 스탬프" class="stamp hidden" id="stamp-7">
-                <p class="class-label">시네마틱</p> </div>
+                <img src="./images/stamp_base.png" alt="시네마틱 스탬프" class="stamp hidden" id="stamp-7">
+                <p class="class-label">시네마틱</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="사진 동아리 스탬프" class="stamp hidden" id="stamp-8">
-                <p class="class-label">포토그래피</p> </div>
+                <img src="./images/stamp_base.png" alt="포토그래피 스탬프" class="stamp hidden" id="stamp-8">
+                <p class="class-label">포토그래피</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="요리 동아리 스탬프" class="stamp hidden" id="stamp-9">
-                <p class="class-label">푸드 크루</p> </div>
+                <img src="./images/stamp_base.png" alt="푸드 크루 스탬프" class="stamp hidden" id="stamp-9">
+                <p class="class-label">푸드 크루</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="독서 토론 동아리 스탬프" class="stamp hidden" id="stamp-10">
-                <p class="class-label">북 토론</p> </div>
+                <img src="./images/stamp_base.png" alt="북 토론 스탬프" class="stamp hidden" id="stamp-10">
+                <p class="class-label">북 토론</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="경제 동아리 스탬프" class="stamp hidden" id="stamp-11">
-                <p class="class-label">이코노믹스</p> </div>
+                <img src="./images/stamp_base.png" alt="이코노믹스 스탬프" class="stamp hidden" id="stamp-11">
+                <p class="class-label">이코노믹스</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="로봇 동아리 스탬프" class="stamp hidden" id="stamp-12">
-                <p class="class-label">로봇 공학</p> </div>
+                <img src="./images/stamp_base.png" alt="로봇 공학 스탬프" class="stamp hidden" id="stamp-12">
+                <p class="class-label">로봇 공학</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="드론 동아리 스탬프" class="stamp hidden" id="stamp-13">
-                <p class="class-label">드론 마스터</p> </div>
+                <img src="./images/stamp_base.png" alt="드론 마스터 스탬프" class="stamp hidden" id="stamp-13">
+                <p class="class-label">드론 마스터</p>
+            </div>
             <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="방송 동아리 스탬프" class="stamp hidden" id="stamp-14">
-                <p class="class-label">아나운서</p> </div>
+                <img src="./images/stamp_base.png" alt="아나운서 스탬프" class="stamp hidden" id="stamp-14">
+                <p class="class-label">아나운서</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="환경 동아리 스탬프" class="stamp hidden" id="stamp-15">
-                <p class="class-label">그린 어스</p> </div>
+                <p class="class-label">그린 어스</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="역사 탐구 동아리 스탬프" class="stamp hidden" id="stamp-16">
-                <p class="class-label">히스토리언</p> </div>
+                <p class="class-label">히스토리언</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="만화 애니 동아리 스탬프" class="stamp hidden" id="stamp-17">
-                <p class="class-label">만화 창작</p> </div>
+                <p class="class-label">만화 창작</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="축구 동아리 스탬프" class="stamp hidden" id="stamp-18">
-                <p class="class-label">사커 킥</p> </div>
+                <p class="class-label">사커 킥</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="농구 동아리 스탬프" class="stamp hidden" id="stamp-19">
-                <p class="class-label">바스켓 샷</p> </div>
+                <p class="class-label">바스켓 샷</p>
+            </div>
             <div class="stamp-item">
                 <img src="./images/stamp_base.png" alt="봉사 동아리 스탬프" class="stamp hidden" id="stamp-20">
-                <p class="class-label">나눔 실천</p> </div>
+                <p class="class-label">나눔 실천</p>
+            </div>
         </div>
 
-        <div class="controls"></div> </div>
+        <div class="controls"></div>
+    </div>
+
+    <div id="location-guide-screen" class="location-guide-screen hidden">
+        <h2 class="guide-title">동아리 위치 안내</h2>
+        <button id="closeLocationGuideBtn" class="guide-close-button">나가기</button>
+    </div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script src="script.js"></script>
