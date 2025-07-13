@@ -146,19 +146,18 @@ async function startQrScanner() {
         return;
     }
     
-    // 이전에 생성된 스캐너 인스턴스가 있다면, 완전히 초기화
+    // 이전에 생성된 스캐너 인스턴스가 있다면, 중지 후 재사용 준비
     if (html5QrCode) {
         try {
-            await html5QrCode.clear(); // 기존 스캐너를 완전히 중지하고 리소스 해제
-            console.log("기존 QR 스캐너 인스턴스 클리어 완료.");
+            await html5QrCode.stop(); // 완전히 clear 대신 stop()으로 스트림만 멈춤
+            console.log("기존 QR 스캐너 인스턴스 stop 완료.");
         } catch (err) {
-            console.warn("기존 QR 스캐너 클리어 중 오류 발생:", err);
-            // 오류가 발생해도 계속 진행 (새로운 인스턴스를 만들 것임)
+            console.warn("기존 QR 스캐너 stop 중 오류 발생:", err);
+            // 오류가 발생해도 계속 진행 (새로운 인스턴스를 만들거나 재시도)
         }
     }
 
-    // 새로운 Html5Qrcode 인스턴스 생성 또는 기존 인스턴스 재사용 준비
-    // Html5Qrcode 인스턴스는 한 번만 생성하는 것이 좋습니다.
+    // 새로운 Html5Qrcode 인스턴스 생성 (필요하다면)
     if (!html5QrCode) {
         html5QrCode = new Html5Qrcode(qrCodeRegionId);
         console.log("새로운 Html5Qrcode 인스턴스 생성됨.");
@@ -166,10 +165,21 @@ async function startQrScanner() {
         console.log("기존 Html5Qrcode 인스턴스 재사용.");
     }
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        // 비디오 해상도 제약 조건 추가
+        videoConstraints: {
+            facingMode: "environment", // 후면 카메라 우선
+            width: { ideal: 1280 },  // 가로 1280px (이상적인 해상도)
+            height: { ideal: 720 }   // 세로 720px (이상적인 해상도)
+        }
+    };
 
     try {
-        await html5QrCode.start({ facingMode: "environment" }, config,
+        await html5QrCode.start(
+            config.videoConstraints, // videoConstraints를 start 함수의 첫 번째 인자로 직접 전달
+            config,
             (decodedText, decodedResult) => {
                 // QR 스캔 성공 시 동작
                 qrResultDiv.textContent = `스캔 완료: ${decodedText}`;
@@ -191,8 +201,7 @@ async function startQrScanner() {
                 }
             },
             (errorMessage) => {
-                // QR 스캔 진행 중 (오류 아님), console.log는 너무 많아질 수 있으니 주석 처리
-                // console.log("QR 스캔 진행:", errorMessage); 
+                // QR 스캔 진행 중 (오류 아님)
             }
         );
         console.log("QR 스캐너 성공적으로 시작됨.");
@@ -318,14 +327,14 @@ submitInfoBtn.addEventListener('click', () => {
 // 동아리 위치 안내 버튼 클릭 이벤트
 showLocationGuideBtn.addEventListener('click', async () => {
     console.log("동아리 위치 안내 버튼 클릭됨.");
-    // QR 스캔 중이라면 중지 및 정리
+    // QR 스캔 중이라면 중지
     if (html5QrCode && html5QrCode.isScanning) {
-        console.log("위치 안내 진입 전 QR 스캐너 중지 및 클리어 시도...");
+        console.log("위치 안내 진입 전 QR 스캐너 중지 시도...");
         try {
-            await html5QrCode.clear(); // 스캐너를 완전히 중지하고 리소스 해제
-            console.log("QR 스캐너 클리어 완료.");
+            await html5QrCode.stop(); // clear() 대신 stop() 사용
+            console.log("QR 스캐너 중지 완료.");
         } catch (err) {
-            console.warn("QR 스캐너 클리어 중 오류 발생:", err);
+            console.warn("QR 스캐너 중지 중 오류 발생:", err);
         }
     } else {
         console.log("QR 스캐너가 실행 중이 아님.");
@@ -344,7 +353,14 @@ closeLocationGuideBtn.addEventListener('click', () => {
     console.log("위치 안내 종료 후 QR 스캐너 재시작 시도...");
     // 브라우저가 카메라 리소스를 완전히 해제할 시간을 주기 위해 지연 추가
     setTimeout(() => {
-        startQrScanner();
+        // html5QrCode 인스턴스가 존재하고, 현재 스캔 중이 아니라면 시작
+        if (html5QrCode && !html5QrCode.isScanning) {
+            startQrScanner();
+        } else if (!html5QrCode) { // 인스턴스가 아예 없는 경우 (첫 로드 시 발생 가능)
+            startQrScanner();
+        } else {
+            console.log("QR 스캐너가 이미 실행 중이거나 초기화 중입니다. 재시작하지 않습니다.");
+        }
     }, 500); // 0.5초 지연
 });
 

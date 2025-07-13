@@ -154,17 +154,29 @@ input[type="number"] {
 
 
 /* --- 메인 컨테이너 (QR 스캔 & 스탬프 화면) 스타일 --- */
-.container {
+.container { /* main-content */
+    position: fixed; /* 다른 화면과 겹치지 않도록 fixed */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(255, 255, 255, 0.9);
     padding: 30px;
-    border-radius: 15px;
+    border-radius: 15px; /* 이제 전체 화면이므로 둥근 모서리는 의미가 약함 */
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     text-align: center;
-    max-width: 90%;
-    width: 800px;
-    margin: 20px auto;
+    max-width: 90%; /* 최대 너비를 뷰포트 너비로 제한 */
+    width: 800px; /* 원래 너비 유지 */
+    margin: 20px auto; /* 중앙 정렬 */
     box-sizing: border-box;
+    display: flex; /* 내부 요소 정렬을 위해 flex 사용 */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 998; /* 가장 낮은 z-index */
+    overflow-y: auto; /* 내용이 길어지면 스크롤 */
 }
+
 
 h1 {
     color: #0056b3;
@@ -190,7 +202,11 @@ h1 {
 #qr-video {
     width: 100%;
     height: 100%;
-    object-fit: fill;
+    /* 비디오의 원본 비율을 유지하면서 컨테이너에 맞춤 */
+    object-fit: cover; /* 기본값: 컨테이너를 채우되 비율 유지 (잘릴 수 있음) */
+    /* object-fit: contain; /* 대안: 비율 유지하며 컨테이너에 맞춰 표시 (검은색 여백 생길 수 있음) */
+    /* object-fit: fill;   /* 대안: 비율 무시하고 컨테이너 꽉 채움 (비디오 찌그러질 수 있음) */
+
     /* 비디오가 항상 보이도록 명시적으로 설정 */
     position: absolute; /* 컨테이너에 맞춰 배치 */
     top: 0;
@@ -369,7 +385,7 @@ h1 {
     width: 100vw;
     height: 100vh;
     /* 새로운 배경 이미지 적용 */
-    background-image: url('images/location_map.jpg');
+    background-image: url('images/KakaoTalk_20250712_225012139_02.jpg');
     background-size: contain; /* 이미지가 잘리지 않고 화면에 맞춰지도록 */
     background-position: center;
     background-repeat: no-repeat; /* 이미지가 반복되지 않도록 */
@@ -379,7 +395,7 @@ h1 {
     flex-direction: column;
     justify-content: space-between; /* 제목은 위, 버튼은 아래에 배치 */
     align-items: center;
-    z-index: 1001; /* 스플래시 스크린보다 높게 */
+    z-index: 999; /* 스플래시 스크린보다 낮고 메인 스크린보다 높게 */
     color: white; /* 텍스트 색상 */
     padding: 20px;
     box-sizing: border-box;
