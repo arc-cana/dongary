@@ -1,3 +1,6 @@
+/* style.css 전체 코드 */
+
+/* 기본 설정 */
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -6,23 +9,163 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    /* background-color: #f0f0f0; /* 배경 이미지 없을 때 대비 색상 - 이 줄은 삭제하거나 주석 처리하세요 */
-
-    /* 배경 이미지 스타일 */
-    background-image: url('images/background.jpg'); /* 여기에 여러분의 이미지 파일 경로를 정확히 넣어주세요! */
-                                                    /* 예: url('images/background.jpg') */
-    background-size: cover; /* 이미지가 화면을 꽉 채우도록 설정 */
-    background-repeat: no-repeat; /* 이미지가 반복되지 않도록 */
-    background-position: center center; /* 이미지를 화면 중앙에 배치 */
-    background-attachment: fixed; /* 스크롤해도 배경 이미지가 고정되도록 */
-    color: #f9f9f9; /* 기본 글자색 */
+    background-image: url('images/background.jpg'); /* 메인 화면 배경 이미지 */
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    color: #333;
+    overflow-x: hidden; /* 가로 스크롤 방지 */
 }
 
+/* 폰트 적용 (Jeju Hallasan) */
+body, .splash-title-text, .input-label-text, .info-input, .splash-start-button {
+    font-family: 'Jeju Hallasan', cursive, sans-serif; /* 칠판 글씨체 우선, 없으면 기본 폰트 */
+}
+
+
+/* --- 초기 입력 화면 (Splash Screen) 스타일 --- */
+.splash-screen {
+    position: fixed; /* 화면 전체를 덮도록 고정 */
+    top: 0;
+    left: 0;
+    width: 100vw; /* 뷰포트 너비 */
+    height: 100vh; /* 뷰포트 높이 */
+    background-image: url('images/intro_screen_bg.jpg'); /* 초기 화면 배경 이미지 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 세로 중앙 정렬 */
+    align-items: center; /* 가로 중앙 정렬 */
+    z-index: 1000; /* 다른 요소들 위에 표시 */
+    color: white; /* 기본 글자색 (배경 이미지에 맞게) */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 글자 그림자 */
+    box-sizing: border-box; /* 패딩, 보더가 너비에 포함 */
+}
+
+.splash-title-text {
+    font-size: 2.5em;
+    color: #FFEB3B; /* 노란색 계열 (칠판 글씨색) */
+    /* 이미지 상의 글자 위치에 맞게 조정 (임의의 값, 필요시 조정) */
+    position: absolute;
+    top: 20%; 
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.input-form-box {
+    width: 90%; /* 박스 너비 */
+    max-width: 500px;
+    padding: 30px 20px; /* 좌우 패딩을 20px로 줄임 */
+    /* 이미지 상의 점선 박스 위치에 맞게 조정 (임의의 값, 필요시 조정) */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* 중앙 정렬 */
+    
+    /* 실제 점선 테두리는 이미지에 있으므로 주석 처리하거나,
+       이미지에 점선이 없다면 아래 border를 활성화합니다. */
+    /* border: 3px dashed #FFF; */ 
+    
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* 왼쪽 정렬 */
+    gap: 15px; /* 줄 간격 (20px에서 15px로 줄임) */
+    background-color: rgba(0,0,0,0); /* 배경 투명 */
+    box-sizing: border-box;
+}
+
+.input-line {
+    display: flex;
+    align-items: center; /* 세로 중앙 정렬 */
+    width: 100%;
+    flex-wrap: wrap; /* 작은 화면에서 줄바꿈 */
+    justify-content: flex-start; /* 왼쪽 정렬 */
+}
+
+.input-label-text {
+    font-size: 1.3em;
+    color: #FFF;
+    white-space: nowrap; /* 줄바꿈 방지 */
+    /* 괄호 안의 입력 필드와의 간격 조정 */
+    margin-right: -2px; /* 괄호와 입력필드를 더 가깝게 */
+    margin-left: -2px;
+}
+
+.info-input {
+    background-color: rgba(255, 255, 255, 0.2); /* 배경 약간 투명하게 */
+    border: none; /* 테두리 없음 */
+    border-bottom: 2px solid #FFEB3B; /* 아래쪽 노란색 줄 */
+    color: #FFEB3B; /* 입력 글자색 */
+    font-size: 1.3em;
+    padding: 2px 5px;
+    margin: 0 3px; /* 텍스트/괄호와의 간격 (5px에서 3px로 줄임) */
+    min-width: 40px; /* 최소 너비 */
+    flex-grow: 1; /* 남은 공간 채우기 */
+    text-align: center; /* 가운데 정렬 */
+    box-sizing: border-box;
+}
+
+/* 숫자 입력 필드의 스피너 버튼 숨기기 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield; /* Firefox */
+}
+
+.info-input:focus {
+    outline: none; /* 포커스 시 아웃라인 제거 */
+    border-color: #FFC107; /* 포커스 시 더 밝은 노란색 */
+}
+
+.info-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.name-input-line .name-input {
+    min-width: 180px; /* 이름 입력 필드 너비 */
+    flex-grow: unset; /* 이름은 유동적으로 늘어나지 않도록 */
+}
+
+.splash-start-button {
+    background-color: #4CAF50; /* 시작 버튼 색상 */
+    color: white;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.5em;
+    font-weight: bold;
+    cursor: pointer;
+    /* 이미지 상의 시작하기 버튼 위치에 맞게 조정 (임의의 값, 필요시 조정) */
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.splash-start-button:hover {
+    background-color: #45a049;
+    transform: translateX(-50%) translateY(-2px);
+}
+
+
+/* --- 메인 컨테이너 (QR 스캔 & 스탬프 화면) 스타일 --- */
 .container {
     background-color: rgba(255, 255, 255, 0.9); /* 컨테이너 배경을 반투명 흰색으로 */
     padding: 30px;
     border-radius: 15px;
-    box-shadow: 0 8px 16px rgba(118, 104, 104, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     text-align: center;
     max-width: 90%; /* 최대 너비를 90%로 설정하여 모바일에서도 보기 좋게 */
     width: 800px; /* 데스크톱 기준 최대 너비 */
@@ -72,8 +215,6 @@ h1 {
     width: 100%; /* 부모 컨테이너에 맞춰 너비 설정 */
     padding: 10px 0; /* 위아래 패딩 */
     margin-top: 20px;
-    /* 스탬프 컨테이너 배경색 (필요시 활성화) */
-    /* background-color: rgba(255, 255, 255, 0.8); */
     border-radius: 10px;
 }
 
@@ -89,8 +230,9 @@ h1 {
     position: relative; /* 스탬프 이미지의 absolute 포지셔닝을 위한 기준 */
     border: 1px solid #ccc; /* 각 칸의 테두리 (선택 사항) */
     border-radius: 8px; /* 테두리 둥글게 (선택 사항) */
-    background-color: #403e3e; /* 칸 배경색 (선택 사항) */
+    background-color: #f9f9f9; /* 칸 배경색 (선택 사항) */
     box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* 그림자 (선택 사항) */
+    box-sizing: border-box;
 }
 
 /* 개별 스탬프 이미지 스타일 */
@@ -106,7 +248,7 @@ h1 {
     transform: translateX(-50%); /* 가로 중앙 정렬 */
 }
 
-/* 반 번호 텍스트 스타일 */
+/* 반 번호 텍스트 (이제 동아리 이름) 스타일 */
 .class-label {
     position: absolute; /* stamp-item 내에서 절대 위치 */
     bottom: 5px; /* 하단에서 약간 떨어뜨림 */
@@ -117,8 +259,10 @@ h1 {
     width: 100%; /* 부모 너비에 맞춤 */
     margin: 0;
     padding: 0;
+    white-space: nowrap; /* 동아리 이름이 길면 줄바꿈 방지 */
+    overflow: hidden; /* 넘치는 텍스트 숨김 */
+    text-overflow: ellipsis; /* 숨겨진 텍스트 ...으로 표시 */
 }
-
 
 /* 스탬프가 찍혔을 때 보일 스타일 (선택 사항) */
 .stamp:not(.hidden) {
@@ -126,10 +270,9 @@ h1 {
     opacity: 1; /* 찍혔을 때 완전히 보임 */
 }
 
-/* 숨겨진 스탬프는 보이지 않게 */
-.stamp.hidden {
-    visibility: hidden; /* 공간은 차지하되 보이지 않게 */
-    opacity: 0; /* 완전히 투명하게 */
+/* 숨겨진 요소 */
+.hidden {
+    display: none !important; /* display:none으로 완전히 숨김 */
 }
 
 /* 관리자 모드 버튼들을 위한 스타일 */
@@ -168,22 +311,27 @@ h1 {
     transform: translateY(-2px); /* 호버 시 약간 위로 올라오는 효과 */
 }
 
-
-
+/* 10반 스탬프 제어 버튼 (마스터 키 활성화용) 스타일 - 선택 사항 */
+.class-control-button[data-class="10"] {
+    background-color: #218838; /* 주황색으로 강조 */
+}
+.class-control-button[data-class="10"]:hover {
+    background-color: #218838;
+}
 
 /* 마스터 모드 버튼 스타일 */
 .controls button:last-child { /* '관리자/마스터 모드 종료' 버튼 */
-    background-color: #007bff; /* 빨간색 계열 */
+    background-color: #f44336; /* 빨간색 계열 */
 }
 .controls button:last-child:hover {
-    background-color: #0056b3
+    background-color: #da190b;
 }
 
 .controls button:nth-last-child(2) { /* '모든 스탬프 초기화' 버튼 (마스터 모드에서) */
-    background-color: #007bff; /* 좀 더 진한 빨간색 */
+    background-color: #dc3545; /* 좀 더 진한 빨간색 */
 }
 .controls button:nth-last-child(2):hover {
-    background-color: #0056b3;
+    background-color: #c82333;
 }
 
 .controls button:first-child:not(.class-control-button) { /* '모든 스탬프 채우기' 버튼 (마스터 모드에서) */
@@ -193,8 +341,29 @@ h1 {
     background-color: #218838;
 }
 
-/* 모바일 화면 최적화 */
+
+/* --- 미디어 쿼리 (반응형 디자인) --- */
 @media (max-width: 768px) {
+    /* Splash Screen 반응형 */
+    .splash-title-text {
+        font-size: 2em;
+        top: 15%; /* 모바일에서 위치 조정 */
+    }
+    .input-form-box {
+        padding: 20px;
+        width: 90%;
+        top: 50%;
+    }
+    .input-label-text, .info-input {
+        font-size: 1.1em;
+    }
+    .splash-start-button {
+        font-size: 1.2em;
+        padding: 12px 25px;
+        bottom: 8%; /* 모바일에서 위치 조정 */
+    }
+
+    /* 메인 컨테이너 반응형 */
     h1 {
         font-size: 1.8em;
     }
@@ -226,6 +395,40 @@ h1 {
 }
 
 @media (max-width: 480px) {
+    /* Splash Screen 반응형 */
+    .splash-title-text {
+        font-size: 1.6em;
+        top: 12%;
+    }
+    .input-form-box {
+        padding: 15px;
+        gap: 10px;
+        top: 48%; /* 작은 화면에서 높이 조정 */
+    }
+    .input-line {
+        flex-direction: column; /* 가장 작은 화면에서는 세로로 쌓기 */
+        align-items: flex-start;
+    }
+    .input-label-text {
+        margin-bottom: 5px; /* 라벨과 입력 필드 사이 간격 */
+        font-size: 1em;
+    }
+    .input-line .info-input {
+        width: calc(100% - 10px); /* 너비 조정 */
+        margin-left: 0;
+        text-align: left;
+        font-size: 1em;
+    }
+    .name-input-line .name-input {
+        width: calc(100% - 10px);
+    }
+    .splash-start-button {
+        font-size: 1em;
+        padding: 10px 20px;
+        bottom: 5%;
+    }
+
+    /* 메인 컨테이너 반응형 */
     h1 {
         font-size: 1.5em;
     }
