@@ -190,7 +190,7 @@ h1 {
 #qr-video {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
     /* 비디오가 항상 보이도록 명시적으로 설정 */
     position: absolute; /* 컨테이너에 맞춰 배치 */
     top: 0;
