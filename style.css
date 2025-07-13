@@ -20,7 +20,7 @@ body {
 
 /* 폰트 적용 (Jeju Hallasan) */
 body, .splash-title-text, .input-label-text, .info-input, .splash-start-button,
-.guide-title, .location-guide-button, .guide-close-button { /* 폰트 적용 대상 추가 */
+.guide-title, .location-guide-button, .guide-close-button, .class-label, #qr-result { /* 폰트 적용 대상 추가 */
     font-family: 'Jeju Hallasan', cursive, sans-serif; /* 칠판 글씨체 우선, 없으면 기본 폰트 */
 }
 
@@ -175,7 +175,7 @@ h1 {
 .qr-video-container {
     width: 100%;
     max-width: 400px;
-    height: 300px;
+    height: 300px; /* 높이 고정 */
     margin: 0 auto 20px auto;
     border: 3px solid #0056b3;
     border-radius: 10px;
@@ -184,12 +184,21 @@ h1 {
     justify-content: center;
     align-items: center;
     background-color: #000;
+    position: relative; /* 자식 요소 z-index를 위해 추가 */
 }
 
 #qr-video {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* 비디오가 항상 보이도록 명시적으로 설정 */
+    position: absolute; /* 컨테이너에 맞춰 배치 */
+    top: 0;
+    left: 0;
+    z-index: 1; /* 다른 요소에 가려지지 않도록 */
+    opacity: 1; /* 투명도 100% */
+    visibility: visible; /* 가시성 확보 */
+    display: block; /* 블록 요소로 확실히 표시 */
 }
 
 #qr-result {
@@ -386,11 +395,6 @@ h1 {
     width: 100%; /* 제목이 중앙에 오도록 */
     flex-shrink: 0; /* 내용이 많아도 줄어들지 않도록 */
 }
-
-/* 이전 guide-content-image-wrapper 스타일은 이제 필요 없습니다. */
-/* .guide-content-image-wrapper { ... } */
-/* .location-guide-image { ... } */
-
 
 .guide-close-button {
     background-color: #f44336;

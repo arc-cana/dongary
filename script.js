@@ -138,7 +138,7 @@ async function startQrScanner() {
 
     const qrCodeRegionId = "qr-video";
     qrResultDiv.textContent = 'QR 코드를 스캔 중...'; // QR 결과 텍스트 초기화
-    qrVideo.classList.remove('hidden'); // 비디오 요소가 보이도록 확실히 설정
+    qrVideo.classList.remove('hidden'); // 비디오 요소가 보이도록 확실히 설정 (CSS의 display: none을 제거)
 
     // 스캐너가 이미 실행 중이라면 불필요한 재시작 방지
     if (html5QrCode && html5QrCode.isScanning) {
@@ -157,9 +157,14 @@ async function startQrScanner() {
         }
     }
 
-    // 새로운 Html5Qrcode 인스턴스 생성
-    html5QrCode = new Html5Qrcode(qrCodeRegionId);
-    console.log("새로운 Html5Qrcode 인스턴스 생성됨.");
+    // 새로운 Html5Qrcode 인스턴스 생성 또는 기존 인스턴스 재사용 준비
+    // Html5Qrcode 인스턴스는 한 번만 생성하는 것이 좋습니다.
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode(qrCodeRegionId);
+        console.log("새로운 Html5Qrcode 인스턴스 생성됨.");
+    } else {
+        console.log("기존 Html5Qrcode 인스턴스 재사용.");
+    }
 
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
@@ -186,8 +191,8 @@ async function startQrScanner() {
                 }
             },
             (errorMessage) => {
-                // QR 스캔 진행 중 (오류 아님)
-                // console.log("QR 스캔 진행:", errorMessage);
+                // QR 스캔 진행 중 (오류 아님), console.log는 너무 많아질 수 있으니 주석 처리
+                // console.log("QR 스캔 진행:", errorMessage); 
             }
         );
         console.log("QR 스캐너 성공적으로 시작됨.");
