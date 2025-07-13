@@ -21,18 +21,42 @@ const qrVideo = document.getElementById('qr-video');
 let html5QrCode; // QR 스캐너 인스턴스를 저장할 변수 (전역 접근 가능하도록)
 let isMasterMode = false; // 관리자 모드 여부
 
+// --- 화면 전환 헬퍼 함수 추가 ---
+function hideAllScreens() {
+    splashScreen.classList.add('hidden');
+    mainContent.classList.add('hidden');
+    locationGuideScreen.classList.add('hidden');
+}
+
+function showSplashScreen() {
+    hideAllScreens();
+    splashScreen.classList.remove('hidden');
+    console.log("화면: 스플래시");
+}
+
+function showMainContentScreen() {
+    hideAllScreens();
+    mainContent.classList.remove('hidden');
+    console.log("화면: 메인 (QR)");
+}
+
+function showLocationGuideScreen() {
+    hideAllScreens();
+    locationGuideScreen.classList.remove('hidden');
+    console.log("화면: 위치 안내");
+}
+// --- 화면 전환 헬퍼 함수 끝 ---
+
+
 // 학생 정보가 localStorage에 있는지 확인하는 함수
 function checkStudentInfo() {
     const studentInfo = localStorage.getItem('studentInfo');
     if (studentInfo) {
-        splashScreen.classList.add('hidden');
-        mainContent.classList.remove('hidden');
-        console.log('학생 정보 로드됨:', JSON.parse(studentInfo));
+        showMainContentScreen(); // 메인 화면 표시
         loadStampState(); // 스탬프 상태 로드
         startQrScanner(); // QR 스캐너 시작
     } else {
-        splashScreen.classList.remove('hidden');
-        mainContent.classList.add('hidden');
+        showSplashScreen(); // 스플래시 화면 표시
     }
 }
 
@@ -108,49 +132,73 @@ function checkAllStampsCollected() {
     }
 }
 
-// QR 스캐너 시작 함수
-function startQrScanner() {
-    // 이미 스캐너가 실행 중이라면 다시 시작하지 않음
-    if (html5QrCode && html5QrCode.isScanning) {
-        console.log("QR scanner is already running.");
-        return;
-    }
+// QR 스캐너 시작 함수 (수정됨)
+async function startQrScanner() {
+    console.log("QR 스캐너 시작 시도...");
 
     const qrCodeRegionId = "qr-video";
+    qrResultDiv.textContent = 'QR 코드를 스캔 중...'; // QR 결과 텍스트 초기화
+    qrVideo.classList.remove('hidden'); // 비디오 요소가 보이도록 확실히 설정
+
+    // 스캐너가 이미 실행 중이라면 불필요한 재시작 방지
+    if (html5QrCode && html5QrCode.isScanning) {
+        console.log("QR 스캐너가 이미 실행 중입니다. 재시작하지 않습니다.");
+        return;
+    }
+    
+    // 이전에 생성된 스캐너 인스턴스가 있다면, 완전히 초기화
+    if (html5QrCode) {
+        try {
+            await html5QrCode.clear(); // 기존 스캐너를 완전히 중지하고 리소스 해제
+            console.log("기존 QR 스캐너 인스턴스 클리어 완료.");
+        } catch (err) {
+            console.warn("기존 QR 스캐너 클리어 중 오류 발생:", err);
+            // 오류가 발생해도 계속 진행 (새로운 인스턴스를 만들 것임)
+        }
+    }
+
+    // 새로운 Html5Qrcode 인스턴스 생성
     html5QrCode = new Html5Qrcode(qrCodeRegionId);
+    console.log("새로운 Html5Qrcode 인스턴스 생성됨.");
 
     const config = { fps: 10, qrbox: { width: 250, height: 250 } };
 
-    html5QrCode.start({ facingMode: "environment" }, config,
-        (decodedText, decodedResult) => {
-            // QR 스캔 성공 시 동작
-            qrResultDiv.textContent = `스캔 완료: ${decodedText}`;
-            console.log(`QR code detected: ${decodedText}`);
-            // 스탬프 적용
-            applyStamp(decodedText);
+    try {
+        await html5QrCode.start({ facingMode: "environment" }, config,
+            (decodedText, decodedResult) => {
+                // QR 스캔 성공 시 동작
+                qrResultDiv.textContent = `스캔 완료: ${decodedText}`;
+                console.log(`QR 코드 감지: ${decodedText}`);
+                applyStamp(decodedText);
 
-            // 성공적으로 스캔되면 잠시 스캐너를 멈췄다가 다시 시작 (중복 스캔 방지)
-            if (html5QrCode.isScanning) {
-                html5QrCode.stop().then(ignore => {
-                    setTimeout(() => {
-                        // QR 스캔 성공 후 2초 후에 스캐너 다시 시작
-                        // (이전에 스캔된 코드를 다시 읽는 것을 방지)
-                        startQrScanner();
-                    }, 2000);
-                }).catch(err => {
-                    console.error("Failed to stop QR scanning after successful scan:", err);
-                });
+                // 스캔 성공 후 잠시 스캐너를 중지했다가 다시 시작 (중복 스캔 방지)
+                if (html5QrCode.isScanning) {
+                    console.log("QR 스캔 성공, 스캐너 일시 중지...");
+                    html5QrCode.stop().then(ignore => {
+                        console.log("스캐너 일시 중지 완료.");
+                        setTimeout(() => {
+                            console.log("성공 스캔 지연 후 스캐너 재시작...");
+                            startQrScanner(); // 2초 후 재시작
+                        }, 2000); 
+                    }).catch(err => {
+                        console.error("스캔 성공 후 스캐너 중지 실패:", err);
+                    });
+                }
+            },
+            (errorMessage) => {
+                // QR 스캔 진행 중 (오류 아님)
+                // console.log("QR 스캔 진행:", errorMessage);
             }
-        },
-        (errorMessage) => {
-            // QR 스캔 실패 또는 오류
-            // qrResultDiv.textContent = `스캔 중... (오류: ${errorMessage})`;
-        }
-    ).catch((err) => {
-        qrResultDiv.textContent = `카메라를 시작할 수 없습니다. 권한을 확인해주세요. (${err})`;
-        console.error("Failed to start QR scanner: ", err);
-    });
+        );
+        console.log("QR 스캐너 성공적으로 시작됨.");
+    } catch (err) {
+        // 카메라 시작 실패 시
+        qrResultDiv.textContent = `카메라를 시작할 수 없습니다. 권한을 확인해주세요. (오류: ${err.message || err})`;
+        console.error("QR 스캐너 시작 실패:", err);
+        qrVideo.classList.add('hidden'); // 비디오 요소를 숨겨 에러 메시지 강조
+    }
 }
+
 
 // 관리자 모드 활성화/비활성화 토글
 function toggleMasterMode() {
@@ -257,61 +305,50 @@ submitInfoBtn.addEventListener('click', () => {
     localStorage.setItem('studentInfo', JSON.stringify(studentInfo));
     alert('정보가 저장되었습니다. 스탬프 화면으로 이동합니다.');
 
-    splashScreen.classList.add('hidden');
-    mainContent.classList.remove('hidden');
-
+    showMainContentScreen(); // 메인 화면 표시
     loadStampState();
     startQrScanner(); // QR 스캐너 시작
 });
 
 // 동아리 위치 안내 버튼 클릭 이벤트
-// script.js 파일의 해당 부분만 수정합니다.
-
-// 동아리 위치 안내 버튼 클릭 이벤트
-showLocationGuideBtn.addEventListener('click', () => {
+showLocationGuideBtn.addEventListener('click', async () => {
+    console.log("동아리 위치 안내 버튼 클릭됨.");
     // QR 스캔 중이라면 중지 및 정리
     if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.clear().then(ignore => { // stop() 대신 clear() 사용
-            console.log("QR scanning stopped and cleared.");
-            // 스캐너가 완전히 정리될 시간을 줍니다.
-            setTimeout(() => {
-                mainContent.classList.add('hidden'); // 메인 화면 숨김
-                locationGuideScreen.classList.remove('hidden'); // 위치 안내 화면 표시
-            }, 100); // 0.1초 지연
-        }).catch(err => {
-            console.warn("Failed to stop or clear QR scanning:", err);
-            // 오류가 발생해도 일단 화면은 전환합니다.
-            mainContent.classList.add('hidden');
-            locationGuideScreen.classList.remove('hidden');
-        });
+        console.log("위치 안내 진입 전 QR 스캐너 중지 및 클리어 시도...");
+        try {
+            await html5QrCode.clear(); // 스캐너를 완전히 중지하고 리소스 해제
+            console.log("QR 스캐너 클리어 완료.");
+        } catch (err) {
+            console.warn("QR 스캐너 클리어 중 오류 발생:", err);
+        }
     } else {
-        mainContent.classList.add('hidden'); // 메인 화면 숨김
-        locationGuideScreen.classList.remove('hidden'); // 위치 안내 화면 표시
+        console.log("QR 스캐너가 실행 중이 아님.");
     }
+    
+    // 화면 전환
+    showLocationGuideScreen();
 });
 
 // 위치 안내 페이지 나가기 버튼 클릭 이벤트
 closeLocationGuideBtn.addEventListener('click', () => {
-    locationGuideScreen.classList.add('hidden'); // 위치 안내 화면 숨김
-    mainContent.classList.remove('hidden'); // 메인 화면 다시 표시
-    
-    // QR 스캔 다시 시작 (약간의 지연 후)
-    // 브라우저가 카메라 리소스를 완전히 해제할 시간을 줍니다.
+    console.log("위치 안내 페이지 나가기 버튼 클릭됨.");
+    showMainContentScreen(); // 메인 화면 다시 표시
+
+    // QR 스캔 다시 시작 (충분한 지연 후)
+    console.log("위치 안내 종료 후 QR 스캐너 재시작 시도...");
+    // 브라우저가 카메라 리소스를 완전히 해제할 시간을 주기 위해 지연 추가
     setTimeout(() => {
-        if (typeof startQrScanner === 'function') {
-            startQrScanner();
-        } else {
-            console.error("startQrScanner function is not defined!");
-        }
-    }, 200); // 0.2초 지연 (필요에 따라 이 값을 조절할 수 있습니다)
+        startQrScanner();
+    }, 500); // 0.5초 지연
 });
 
-// --- 나머지 script.js 코드는 그대로 두시면 됩니다 ---
 
 // 10반 스탬프 (마스터 키) 클릭 시 관리자 모드 토글
 document.getElementById('stamp-10').addEventListener('click', (event) => {
-    event.preventDefault(); // 기본 이미지 클릭 동작 방지
-    if (event.ctrlKey || event.metaKey) { // Ctrl 또는 Cmd 키와 함께 클릭 시
+    // Ctrl 또는 Cmd 키와 함께 10번 스탬프 클릭 시 마스터 모드 토글
+    if (event.ctrlKey || event.metaKey) {
+        event.preventDefault(); // 기본 이미지 클릭 동작 방지
         toggleMasterMode();
     }
 });
