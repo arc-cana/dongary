@@ -103,7 +103,7 @@ body, .splash-title-text, .input-label-text, .info-input, .splash-start-button {
     color: #FFEB3B; /* 입력 글자색 */
     font-size: 1.3em;
     padding: 2px 5px;
-    margin: 0 3px; /* 텍스트/괄호와의 간격 (5px에서 3px로 줄임) */
+    margin: 0 1px; /* 텍스트/괄호와의 간격 (5px에서 3px로 줄임) */
     min-width: 40px; /* 최소 너비 */
     flex-grow: 1; /* 남은 공간 채우기 */
     text-align: center; /* 가운데 정렬 */
