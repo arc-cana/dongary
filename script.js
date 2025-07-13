@@ -265,29 +265,48 @@ submitInfoBtn.addEventListener('click', () => {
 });
 
 // 동아리 위치 안내 버튼 클릭 이벤트
-showLocationGuideBtn.addEventListener('click', () => {
-    // QR 스캔 중이라면 중지
-    if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(ignore => {
-            console.log("QR scanning stopped.");
-        }).catch(err => {
-            console.warn("Failed to stop QR scanning:", err);
-        });
-    }
+// script.js 파일의 해당 부분만 수정합니다.
 
-    mainContent.classList.add('hidden'); // 메인 화면 숨김
-    locationGuideScreen.classList.remove('hidden'); // 위치 안내 화면 표시
+// 동아리 위치 안내 버튼 클릭 이벤트
+showLocationGuideBtn.addEventListener('click', () => {
+    // QR 스캔 중이라면 중지 및 정리
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.clear().then(ignore => { // stop() 대신 clear() 사용
+            console.log("QR scanning stopped and cleared.");
+            // 스캐너가 완전히 정리될 시간을 줍니다.
+            setTimeout(() => {
+                mainContent.classList.add('hidden'); // 메인 화면 숨김
+                locationGuideScreen.classList.remove('hidden'); // 위치 안내 화면 표시
+            }, 100); // 0.1초 지연
+        }).catch(err => {
+            console.warn("Failed to stop or clear QR scanning:", err);
+            // 오류가 발생해도 일단 화면은 전환합니다.
+            mainContent.classList.add('hidden');
+            locationGuideScreen.classList.remove('hidden');
+        });
+    } else {
+        mainContent.classList.add('hidden'); // 메인 화면 숨김
+        locationGuideScreen.classList.remove('hidden'); // 위치 안내 화면 표시
+    }
 });
 
 // 위치 안내 페이지 나가기 버튼 클릭 이벤트
 closeLocationGuideBtn.addEventListener('click', () => {
     locationGuideScreen.classList.add('hidden'); // 위치 안내 화면 숨김
     mainContent.classList.remove('hidden'); // 메인 화면 다시 표시
-
-    // QR 스캔 다시 시작
-    startQrScanner();
+    
+    // QR 스캔 다시 시작 (약간의 지연 후)
+    // 브라우저가 카메라 리소스를 완전히 해제할 시간을 줍니다.
+    setTimeout(() => {
+        if (typeof startQrScanner === 'function') {
+            startQrScanner();
+        } else {
+            console.error("startQrScanner function is not defined!");
+        }
+    }, 200); // 0.2초 지연 (필요에 따라 이 값을 조절할 수 있습니다)
 });
 
+// --- 나머지 script.js 코드는 그대로 두시면 됩니다 ---
 
 // 10반 스탬프 (마스터 키) 클릭 시 관리자 모드 토글
 document.getElementById('stamp-10').addEventListener('click', (event) => {

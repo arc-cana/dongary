@@ -360,7 +360,7 @@ h1 {
     width: 100vw;
     height: 100vh;
     /* 새로운 배경 이미지 적용 */
-    background-image: url('images/simplebackground.jpg');
+    background-image: url('images/location_map.jpg');
     background-size: contain; /* 이미지가 잘리지 않고 화면에 맞춰지도록 */
     background-position: center;
     background-repeat: no-repeat; /* 이미지가 반복되지 않도록 */
