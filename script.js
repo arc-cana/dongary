@@ -22,15 +22,11 @@ let tokenClient; // Google OAuth2.0 클라이언트 객체
 // Google API 클라이언트 라이브러리 (gapi) 및 Google Identity Services (GIS) 라이브러리 로드
 function loadGoogleAPI() {
     return new Promise((resolve, reject) => {
-        // google.accounts.id (GIS) 라이브러리 로드
-        const gisScript = document.createElement('script');
-        gisScript.src = 'https://accounts.google.com/gsi/client';
-        gisScript.async = true;
-        gisScript.defer = true;
-        
-        gisScript.onload = () => {
-            console.log("GIS 스크립트 로드 완료. google 객체 확인:", typeof google);
-            if (typeof google !== 'undefined' && google.accounts) {
+        // GIS 라이브러리가 로드되고 초기화될 때 호출될 전역 함수 정의
+        // 이 함수는 GIS 스크립트가 로드되면 자동으로 호출됩니다.
+        window.onGoogleLibraryLoad = () => {
+            console.log("window.onGoogleLibraryLoad 콜백 호출됨.");
+            if (typeof google !== 'undefined' && google.accounts) { // google.accounts 객체 존재 여부 먼저 확인
                 console.log("google.accounts 객체 확인:", google.accounts);
                 if (google.accounts.oauth2 && typeof google.accounts.oauth2.initOAuth2TokenClient === 'function') {
                     gisLoaded = true; // 로드 완료 플래그 설정
@@ -39,7 +35,7 @@ function loadGoogleAPI() {
                         scope: SCOPES,
                         callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
                     });
-                    console.log("Google Identity Services 초기화 성공.");
+                    console.log("Google Identity Services 초기화 성공 (onGoogleLibraryLoad 내부).");
 
                     // gapi (Google API 클라이언트) 라이브러리 로드
                     const gapiScript = document.createElement('script');
@@ -63,14 +59,20 @@ function loadGoogleAPI() {
                     };
                     document.head.appendChild(gapiScript);
                 } else {
-                    console.error("GIS 라이브러리 로드 완료 후 'google.accounts.oauth2.initOAuth2TokenClient' 함수를 찾을 수 없습니다. 'google.accounts.oauth2' 객체 상태:", google.accounts.oauth2);
-                    reject(new Error("GIS initOAuth2TokenClient not found after load"));
+                    console.error("onGoogleLibraryLoad 콜백 후 'google.accounts.oauth2.initOAuth2TokenClient' 함수를 찾을 수 없습니다. 'google.accounts.oauth2' 객체 상태:", google.accounts.oauth2);
+                    reject(new Error("GIS initOAuth2TokenClient not found after onGoogleLibraryLoad"));
                 }
             } else {
-                console.error("GIS 스크립트 로드 완료 후 'google' 또는 'google.accounts' 객체를 찾을 수 없습니다.");
-                reject(new Error("Google GIS objects not found after load"));
+                console.error("onGoogleLibraryLoad 콜백 후 'google' 또는 'google.accounts' 객체를 찾을 수 없습니다.");
+                reject(new Error("Google GIS objects not found after onGoogleLibraryLoad"));
             }
         };
+
+        // GIS 라이브러리 스크립트 생성 및 삽입
+        const gisScript = document.createElement('script');
+        gisScript.src = 'https://accounts.google.com/gsi/client';
+        gisScript.async = true;
+        gisScript.defer = true;
         gisScript.onerror = (err) => {
             console.error("GIS 스크립트 로드 실패: ", err);
             reject(err);
@@ -78,6 +80,7 @@ function loadGoogleAPI() {
         document.head.appendChild(gisScript);
     });
 }
+
 
 // 인증 확인 및 토큰 요청 함수
 async function checkAuthAndGetToken() {
