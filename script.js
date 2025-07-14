@@ -3,6 +3,7 @@
 // Firebase SDK는 index.html에서 이미 초기화되었으므로,
 // 여기서는 초기화된 'auth'와 'database' 전역 객체를 사용합니다.
 // (index.html에서 window.auth, window.database로 할당됨)
+// !!! 중요: window.database는 firebase/database 모듈의 getDatabase()로 얻은 객체여야 합니다.
 
 // 기존 Google Sheets API 관련 상수들은 이제 필요 없으므로 제거합니다.
 // const CLIENT_ID = "YOUR_CLIENT_ID";
@@ -16,13 +17,13 @@ const CLUBS_DB_PATH = "clubs";       // 동아리 목록이 저장될 경로
 
 // index.html에서 초기화된 Firebase 서비스 객체들을 가져올 변수 선언
 let auth;
-let database;
+let database; // 이 database 변수에는 getDatabase()로 얻은 Realtime Database 인스턴스가 할당될 것임
 
 // DOMContentLoaded 이벤트는 HTML 문서가 완전히 로드되고 파싱된 후에 실행됩니다.
 document.addEventListener('DOMContentLoaded', async () => {
     // Firebase 서비스 객체들을 전역 window 객체에서 가져와 사용합니다.
     auth = window.auth;
-    database = window.database;
+    database = window.database; // 여기서 database는 이미 getDatabase()로 얻은 인스턴스여야 함
 
     // Firebase 서비스가 제대로 초기화되었는지 확인
     if (!auth || !database) {
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return; // 초기화 실패 시 앱 실행 중단
     }
     console.log("script.js에서 Firebase Auth 및 Database 객체 사용 가능.");
+    // console.log("Firebase Database 인스턴스 확인:", database); // 디버깅용: database 객체 내용 확인
 
     // ====================================================================
     // Firebase Authentication (Google 로그인) 관련 함수
@@ -38,38 +40,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 필요하다면 submitInfoBtn 클릭 시 이 함수를 호출하여 로그인 과정을 추가할 수 있습니다.
     // ====================================================================
 
+    // Firebase Auth v9+ 스타일로 수정
+    // firebase.auth.GoogleAuthProvider() 대신에 getAuth()에서 가져온 Auth 인스턴스에 따라 달라짐
+    // 이 함수가 사용되려면 index.html에서 Auth 관련 모듈도 적절히 import 되어야 함.
+    // 현재 코드에서는 Auth를 사용하지 않는 것으로 보임 (주석 처리됨)
+    /*
     async function signInWithGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider(); // Google 로그인 제공자 생성
+        // Firebase Auth v9+ 방식: import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+        // 그리고 auth는 getAuth()로 얻은 인스턴스여야 함.
+        // 현재는 window.auth를 사용하므로, window.auth가 어떻게 정의되었는지에 따라 달라짐.
+        // 이 부분은 현재 실행 흐름에서 사용되지 않으므로 일단 그대로 둡니다.
+        const provider = new firebase.auth.GoogleAuthProvider();
         try {
             console.log("Google 로그인 팝업 시도 중...");
-            await auth.signInWithPopup(provider); // 팝업을 통해 로그인 시도
+            await auth.signInWithPopup(provider);
             console.log("Google 로그인 성공!");
-            return true; // 로그인 성공 시 true 반환
+            return true;
         } catch (error) {
             console.error("Google 로그인 실패:", error);
             alert("Google 로그인에 실패했습니다. 오류: " + error.message);
-            return false; // 로그인 실패 시 false 반환
+            return false;
         }
     }
+    */
 
     // ====================================================================
     // Firebase Realtime Database 호출 함수들 (기존 Google Sheets API 대체)
+    // !!! 핵심 수정: ref() 함수 사용 방식 변경 !!!
     // ====================================================================
 
     // 학생 정보 가져오기 (기존 getStudentInfo 함수 대체)
     async function getStudentInfoFirebase(grade, sClass, number) {
-        // 학년-반-번호를 조합하여 Firebase 데이터베이스의 고유 키로 사용합니다.
         const studentId = `${grade}-${sClass}-${number}`;
         try {
             console.log(`Firebase 학생 정보 로드 시도 중: ${studentId}`);
-            // database.ref()로 특정 경로를 참조하고, .once('value')로 해당 경로의 데이터를 한 번 읽어옵니다.
-            const snapshot = await database.ref(`${STUDENTS_DB_PATH}/${studentId}`).once('value');
-            if (snapshot.exists()) { // 데이터가 존재하는지 확인
+            // 수정: database.ref() -> ref(database, 경로) 및 get() 사용
+            const studentRef = ref(database, `${STUDENTS_DB_PATH}/${studentId}`);
+            const snapshot = await get(studentRef); // .once('value') 대신 get() 사용
+
+            if (snapshot.exists()) {
                 console.log("Firebase 학생 정보 로드 성공:", snapshot.val());
-                return snapshot.val(); // 스냅샷의 값(JSON 객체)을 반환
+                return snapshot.val();
             } else {
                 console.log(`Firebase에 ${studentId} 학생 정보 없음.`);
-                return null; // 데이터가 없으면 null 반환
+                return null;
             }
         } catch (error) {
             console.error("Firebase 학생 정보 로드 중 오류 발생:", error);
@@ -83,14 +97,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const studentId = `${grade}-${sClass}-${number}`;
         try {
             console.log(`Firebase 스탬프 정보 로드 시도 중: ${studentId}`);
-            const snapshot = await database.ref(`${STAMPS_DB_PATH}/${studentId}`).once('value');
+            // 수정: database.ref() -> ref(database, 경로) 및 get() 사용
+            const stampsRef = ref(database, `${STAMPS_DB_PATH}/${studentId}`);
+            const snapshot = await get(stampsRef);
+
             if (snapshot.exists()) {
-                const data = snapshot.val(); // 스탬프 데이터 가져오기
+                const data = snapshot.val();
                 console.log("Firebase 스탬프 정보 로드 성공:", data);
                 return {
-                    stampedClubs: data.stampedClubs || [], // 스탬프 찍은 동아리 ID 배열 (없으면 빈 배열)
-                    hasTenStamps: data.hasTenStamps || false, // 10개 스탬프 달성 여부 (없으면 false)
-                    bestClubVote: data.bestClubVote || "" // 최고 동아리 투표 (없으면 빈 문자열)
+                    stampedClubs: data.stampedClubs || [],
+                    hasTenStamps: data.hasTenStamps || false, // Firebase에서 'O'/'X'로 저장했다면 여기에 변환 로직 필요
+                    bestClubVote: data.bestClubVote || ""
                 };
             } else {
                 console.log(`Firebase에 ${studentId} 스탬프 정보 없음.`);
@@ -108,8 +125,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const studentId = `${studentInfo.grade}-${studentInfo.sClass}-${studentInfo.number}`;
         try {
             console.log(`Firebase 학생 정보 저장/업데이트 시도 중: ${studentId}`);
-            // .set() 메서드는 해당 경로의 데이터를 덮어쓰거나 새로 생성합니다.
-            await database.ref(`${STUDENTS_DB_PATH}/${studentId}`).set(studentInfo);
+            // 수정: database.ref().set() -> set(ref(database, 경로), 데이터)
+            const studentRef = ref(database, `${STUDENTS_DB_PATH}/${studentId}`);
+            await set(studentRef, studentInfo);
             console.log("Firebase 학생 정보 저장/업데이트 완료.");
             return { success: true, message: "Student info saved/updated in Firebase." };
         } catch (error) {
@@ -126,11 +144,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(`Firebase 스탬프 정보 저장/업데이트 시도 중: ${studentId}`);
             const dataToSave = {
                 stampedClubs: studentInfo.stampedClubs || [],
-                hasTenStamps: studentInfo.stampedClubs.length >= 10 ? 'O' : 'X', // 10개 이상이면 'O', 아니면 'X'
+                // 'hasTenStamps' 필드는 'O'/'X' 대신 boolean으로 관리하는 것이 더 좋습니다.
+                // Firebase Database에 'O'/'X'로 저장하고 싶다면 이 부분은 그대로 두세요.
+                hasTenStamps: studentInfo.stampedClubs.length >= 10 ? 'O' : 'X',
                 bestClubVote: studentInfo.bestClubVote || ""
             };
-            // .update() 메서드는 특정 필드만 업데이트하고, 없는 필드는 추가합니다.
-            await database.ref(`${STAMPS_DB_PATH}/${studentId}`).update(dataToSave);
+            // 수정: database.ref().update() -> update(ref(database, 경로), 데이터)
+            const stampsRef = ref(database, `${STAMPS_DB_PATH}/${studentId}`);
+            await update(stampsRef, dataToSave);
             console.log("Firebase 스탬프 정보 저장/업데이트 완료.");
             return { success: true, message: "Stamps saved/updated in Firebase." };
         } catch (error) {
@@ -145,7 +166,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const studentId = `${studentInfo.grade}-${studentInfo.sClass}-${studentInfo.number}`;
         try {
             console.log(`Firebase 최고 동아리 투표 저장 시도 중: ${studentId}`);
-            await database.ref(`${STAMPS_DB_PATH}/${studentId}`).update({ bestClubVote: studentInfo.bestClub });
+            // 수정: database.ref().update() -> update(ref(database, 경로), 데이터)
+            const stampsRef = ref(database, `${STAMPS_DB_PATH}/${studentId}`);
+            await update(stampsRef, { bestClubVote: studentInfo.bestClub });
             console.log("Firebase 최고 동아리 투표 저장 완료.");
             return { success: true, message: "Best club vote saved in Firebase." };
         } catch (error) {
@@ -159,11 +182,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function getClubListFirebase() {
         try {
             console.log("Firebase 동아리 목록 로드 시도 중...");
-            const snapshot = await database.ref(CLUBS_DB_PATH).once('value');
+            // 수정: database.ref() -> ref(database, 경로) 및 get() 사용
+            const clubsRef = ref(database, CLUBS_DB_PATH);
+            const snapshot = await get(clubsRef);
             const clubs = [];
             if (snapshot.exists()) {
                 snapshot.forEach(childSnapshot => {
                     // Realtime Database의 키는 문자열이므로, ID로 사용하려면 숫자로 변환합니다.
+                    // Firebase에 동아리 데이터가 { "1": { "name": "동아리A" }, "2": { "name": "동아리B" } } 형태로 저장되어 있다고 가정.
                     clubs.push({ id: Number(childSnapshot.key), name: childSnapshot.val().name });
                 });
                 console.log("Firebase 동아리 목록 로드 성공:", clubs);
@@ -183,7 +209,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // HTML 요소 및 이벤트 리스너 (DOM 조작) - 기존 로직을 Firebase 함수로 교체
     // ====================================================================
 
-    // 기존 HTML 요소들을 JavaScript 변수로 가져옵니다.
+    // ... (이 아래 부분은 변경 없이 그대로 두시면 됩니다.)
+    // 이 코드들은 위에서 수정한 Firebase 함수들을 호출합니다.
+
     const splashScreen = document.getElementById('splash-screen');
     const mainContent = document.getElementById('main-content');
     const locationGuideScreen = document.getElementById('location-guide-screen');
@@ -230,7 +258,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     showScreen(splashScreen); // 앱 시작 시 스플래시 화면 표시
-    
+
     // "시작하기" 버튼 클릭 이벤트 리스너
     submitInfoBtn.addEventListener('click', async () => {
         const grade = inputGrade.value;
@@ -254,11 +282,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Firebase Auth를 통해 사용자를 관리해야 합니다.
             // const loggedIn = await signInWithGoogle();
             // if (!loggedIn) {
-            //     return; // 로그인 실패 시 앱 진행 중단
+            //    return; // 로그인 실패 시 앱 진행 중단
             // }
 
             // 동아리 목록 로드 (Firebase 함수 호출)
-            clubDataList = await getClubListFirebase(); 
+            clubDataList = await getClubListFirebase();
             console.log("동아리 목록 로드 완료 (Firebase):", clubDataList);
             if (clubDataList.length === 0) {
                 alert("동아리 목록을 가져오지 못했습니다. Firebase Realtime Database의 'clubs' 경로를 확인해주세요.");
@@ -391,7 +419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         stampedClubs: currentStampedClubs,
                         name: currentStudent.name,
                         // 스탬프 저장 시 기존 투표 정보가 날아가지 않도록 다시 불러와서 함께 저장
-                        bestClubVote: (await getStampsFirebase(currentStudent.grade, currentStudent.sClass, currentStudent.number)).bestClubVote 
+                        bestClubVote: (await getStampsFirebase(currentStudent.grade, currentStudent.sClass, currentStudent.number)).bestClubVote
                     });
                     // 동아리 이름 찾아서 알림
                     alert(`${clubDataList.find(c => c.id === clubId)?.name || '해당 동아리'} 스탬프가 찍혔습니다!`);
