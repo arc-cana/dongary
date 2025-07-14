@@ -23,14 +23,14 @@ let tokenClient; // Google OAuth2.0 클라이언트 객체
 function loadGoogleAPI() {
     return new Promise((resolve, reject) => {
         // GIS 라이브러리가 로드되고 초기화될 때 호출될 전역 함수 정의
-        // 이 함수는 GIS 스크립트가 로드되면 자동으로 호출됩니다.
         window.onGoogleLibraryLoad = () => {
             console.log("window.onGoogleLibraryLoad 콜백 호출됨.");
-            if (typeof google !== 'undefined' && google.accounts) { // google.accounts 객체 존재 여부 먼저 확인
+            if (typeof google !== 'undefined' && google.accounts) {
                 console.log("google.accounts 객체 확인:", google.accounts);
-                if (google.accounts.oauth2 && typeof google.accounts.oauth2.initOAuth2TokenClient === 'function') {
+                // 핵심 수정: initOAuth2TokenClient -> initTokenClient
+                if (google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') {
                     gisLoaded = true; // 로드 완료 플래그 설정
-                    tokenClient = google.accounts.oauth2.initOAuth2TokenClient({
+                    tokenClient = google.accounts.oauth2.initTokenClient({ // 이 부분 수정
                         client_id: CLIENT_ID,
                         scope: SCOPES,
                         callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
@@ -59,8 +59,8 @@ function loadGoogleAPI() {
                     };
                     document.head.appendChild(gapiScript);
                 } else {
-                    console.error("onGoogleLibraryLoad 콜백 후 'google.accounts.oauth2.initOAuth2TokenClient' 함수를 찾을 수 없습니다. 'google.accounts.oauth2' 객체 상태:", google.accounts.oauth2);
-                    reject(new Error("GIS initOAuth2TokenClient not found after onGoogleLibraryLoad"));
+                    console.error("onGoogleLibraryLoad 콜백 후 'google.accounts.oauth2.initTokenClient' 함수를 찾을 수 없습니다. 'google.accounts.oauth2' 객체 상태:", google.accounts.oauth2);
+                    reject(new Error("GIS initTokenClient not found after onGoogleLibraryLoad"));
                 }
             } else {
                 console.error("onGoogleLibraryLoad 콜백 후 'google' 또는 'google.accounts' 객체를 찾을 수 없습니다.");
