@@ -2,7 +2,7 @@
 
 // ====================================================================
 // !!! 중요: 이 부분을 여러분이 생성한 OAuth 클라이언트 ID로 변경하세요 !!!
-const CLIENT_ID = "795499292540-npdno6q7obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com";
+const CLIENT_ID = "795499292540-npdno6q7obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com"; 
 // 예시: "123456789012-abcdefg1234567890abcdefg1234567890.apps.googleusercontent.com";
 // ====================================================================
 
@@ -115,11 +115,13 @@ loadGoogleAPI().then(() => {
 async function getStudentInfo(grade, sClass, number) {
     try {
         await checkAuthAndGetToken();
+        console.log("getStudentInfo: Sheets API 호출 시도 중..."); // 추가된 로그
         const range = `${STUDENTS_SHEET_NAME}!A:D`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: range,
         });
+        console.log("getStudentInfo: Sheets API 호출 성공. 응답:", response); // 추가된 로그
         const studentData = response.result.values;
         if (!studentData || studentData.length < 2) return null;
 
@@ -146,11 +148,13 @@ async function getStudentInfo(grade, sClass, number) {
 async function getStamps(grade, sClass, number) {
     try {
         await checkAuthAndGetToken();
+        console.log("getStamps: Sheets API 호출 시도 중..."); // 추가된 로그
         const range = `${STAMPS_SHEET_NAME}!A:G`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: range,
         });
+        console.log("getStamps: Sheets API 호출 성공. 응답:", response); // 추가된 로그
         const stampsData = response.result.values;
         if (!stampsData || stampsData.length < 2) return { stampedClubs: [], hasTenStamps: false, bestClubVote: "" };
 
@@ -177,11 +181,13 @@ async function getStamps(grade, sClass, number) {
 async function saveStudentInfo(studentInfo) {
     try {
         await checkAuthAndGetToken();
+        console.log("saveStudentInfo: Sheets API (get for check) 호출 시도 중..."); // 추가된 로그
         const studentSheetName = STUDENTS_SHEET_NAME;
         const studentData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${studentSheetName}!A:D`,
         });
+        console.log("saveStudentInfo: Sheets API (get for check) 호출 성공. 응답:", studentData); // 추가된 로그
 
         const values = studentData.result.values || [];
         let foundRow = -1;
@@ -193,6 +199,7 @@ async function saveStudentInfo(studentInfo) {
         }
 
         if (foundRow !== -1) {
+            console.log("saveStudentInfo: Sheets API (update) 호출 시도 중..."); // 추가된 로그
             const updateRange = `${studentSheetName}!D${foundRow}`;
             await gapi.client.sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
@@ -202,9 +209,11 @@ async function saveStudentInfo(studentInfo) {
                     values: [[studentInfo.name]]
                 },
             });
+            console.log("saveStudentInfo: Sheets API (update) 호출 성공."); // 추가된 로그
             console.log("학생 정보 업데이트 완료.");
             return { success: true, message: "Student info updated." };
         } else {
+            console.log("saveStudentInfo: Sheets API (append) 호출 시도 중..."); // 추가된 로그
             const appendRange = `${studentSheetName}!A:D`;
             await gapi.client.sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
@@ -215,6 +224,7 @@ async function saveStudentInfo(studentInfo) {
                     values: [[studentInfo.grade, studentInfo.sClass, studentInfo.number, studentInfo.name]]
                 },
             });
+            console.log("saveStudentInfo: Sheets API (append) 호출 성공."); // 추가된 로그
             console.log("새로운 학생 정보 저장 완료.");
             return { success: true, message: "New student info saved." };
         }
@@ -228,11 +238,13 @@ async function saveStudentInfo(studentInfo) {
 async function saveStamps(studentInfo) {
     try {
         await checkAuthAndGetToken();
+        console.log("saveStamps: Sheets API (get for check) 호출 시도 중..."); // 추가된 로그
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${stampsSheetName}!A:G`,
         });
+        console.log("saveStamps: Sheets API (get for check) 호출 성공. 응답:", stampsData); // 추가된 로그
 
         const values = stampsData.result.values || [];
         let foundRow = -1;
@@ -247,6 +259,7 @@ async function saveStamps(studentInfo) {
         const hasTenStampsMark = studentInfo.stampedClubs.length >= 10 ? 'O' : 'X';
 
         if (foundRow !== -1) {
+            console.log("saveStamps: Sheets API (update) 호출 시도 중..."); // 추가된 로그
             const updateRange = `${stampsSheetName}!E${foundRow}:G${foundRow}`;
             await gapi.client.sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
@@ -256,9 +269,11 @@ async function saveStamps(studentInfo) {
                     values: [[stampedClubsString, hasTenStampsMark, studentInfo.bestClubVote || ""]]
                 },
             });
+            console.log("saveStamps: Sheets API (update) 호출 성공."); // 추가된 로그
             console.log("스탬프 정보 업데이트 완료.");
             return { success: true, message: "Stamps updated." };
         } else {
+            console.log("saveStamps: Sheets API (append) 호출 시도 중..."); // 추가된 로그
             const appendRange = `${stampsSheetName}!A:G`;
             await gapi.client.sheets.spreadsheets.values.append({
                 spreadsheetId: SPREADSHEET_ID,
@@ -269,6 +284,7 @@ async function saveStamps(studentInfo) {
                     values: [[studentInfo.grade, studentInfo.sClass, studentInfo.number, studentInfo.name || "", stampedClubsString, hasTenStampsMark, studentInfo.bestClubVote || ""]]
                 },
             });
+            console.log("saveStamps: Sheets API (append) 호출 성공."); // 추가된 로그
             console.log("새로운 스탬프 정보 저장 완료.");
             return { success: true, message: "New stamps saved." };
         }
@@ -282,11 +298,13 @@ async function saveStamps(studentInfo) {
 async function saveBestClubVote(studentInfo) {
     try {
         await checkAuthAndGetToken();
+        console.log("saveBestClubVote: Sheets API (get for check) 호출 시도 중..."); // 추가된 로그
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: `${stampsSheetName}!A:G`,
         });
+        console.log("saveBestClubVote: Sheets API (get for check) 호출 성공. 응답:", stampsData); // 추가된 로그
 
         const values = stampsData.result.values || [];
         let foundRow = -1;
@@ -298,6 +316,7 @@ async function saveBestClubVote(studentInfo) {
         }
 
         if (foundRow !== -1) {
+            console.log("saveBestClubVote: Sheets API (update) 호출 시도 중..."); // 추가된 로그
             const updateRange = `${stampsSheetName}!G${foundRow}`;
             await gapi.client.sheets.spreadsheets.values.update({
                 spreadsheetId: SPREADSHEET_ID,
@@ -307,6 +326,7 @@ async function saveBestClubVote(studentInfo) {
                     values: [[studentInfo.bestClub]]
                 },
             });
+            console.log("saveBestClubVote: Sheets API (update) 호출 성공."); // 추가된 로그
             console.log("최고 동아리 투표 저장 완료.");
             return { success: true, message: "Best club vote saved." };
         } else {
@@ -325,11 +345,13 @@ async function saveBestClubVote(studentInfo) {
 async function getClubList() {
     try {
         await checkAuthAndGetToken(); // 동아리 목록 로드에도 인증 필요
+        console.log("getClubList: Sheets API 호출 시도 중..."); // 추가된 로그
         const range = `${CLUB_LIST_SHEET_NAME}!A:B`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: range,
         });
+        console.log("getClubList: Sheets API 호출 성공. 응답:", response); // 추가된 로그
 
         const clubData = response.result.values;
         if (!clubData || clubData.length < 2) {
