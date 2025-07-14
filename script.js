@@ -1,5 +1,5 @@
 // Firebase Realtime Database 모듈 임포트
-import { getDatabase, ref, set, get, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const splashScreen = document.getElementById('splash-screen');
@@ -69,7 +69,7 @@ function showScreen(screenToShow) {
             database = window.database; 
             startWebcam();
             loadStampState();
-            checkTenStamps();
+            checkTenStamps(); // 화면 전환 시 10개 스탬프 상태 및 투표 상태 확인
         } else {
             console.error("Firebase Database가 초기화되지 않았습니다. 잠시 후 다시 시도합니다.");
             alert("앱 초기화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
@@ -205,7 +205,7 @@ async function processQRData(data) {
                         stampImages[stampIndex].classList.remove('hidden');
                         qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; // 동아리 이름 사용
                         console.log(`${clubName} 스탬프가 찍혔습니다.`);
-                        checkTenStamps(); 
+                        checkTenStamps(); // 스탬프 찍을 때마다 10개 달성 여부 확인
                     } else {
                         qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; // 동아리 이름 사용
                         console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
@@ -238,14 +238,16 @@ async function resetAllStamps() {
 
         try {
             await remove(ref(database, `stamps/${currentStudentId}`)); 
-            await remove(ref(database, `votes/${currentStudentId}`)); 
+            // 투표 데이터는 이제 clubVotes에 집계되므로 학생별 votes는 제거하지 않습니다.
+            // 대신 학생의 hasVoted 상태를 초기화합니다.
+            await update(ref(database, `students/${currentStudentId}`), { hasVoted: null, hasTenStamps: null }); // 투표 및 출석인정 상태 초기화
 
             stampImages.forEach(stamp => {
                 stamp.classList.add('hidden');
             });
             qrResult.textContent = '모든 스탬프가 초기화되었습니다.';
             console.log('모든 스탬프 초기화 완료.');
-            checkTenStamps();
+            checkTenStamps(); // 초기화 후 10개 스탬프 상태 다시 확인
         } catch (error) {
             console.error("Firebase 스탬프 초기화 실패:", error);
             alert("스탬프 초기화에 실패했습니다: " + error.message);
@@ -303,15 +305,23 @@ async function checkTenStamps() {
             }
         }
 
+        const studentRef = ref(database, `students/${currentStudentId}`);
+        const studentSnapshot = await get(studentRef);
+        const studentData = studentSnapshot.val();
+        
         if (stampedCount >= 10) {
             tenStampsMessage.classList.remove('hidden');
             
-            const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
-            const votedClub = voteSnapshot.val();
+            // 학생 정보에 '출석인정' 필드 추가/업데이트
+            if (studentData && studentData.hasTenStamps !== "출석인정") {
+                await update(studentRef, { hasTenStamps: "출석인정" });
+                console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
+            }
 
-            if (votedClub) {
-                bestClubVoteStatus.textContent = `✅ 이미 ${votedClub}에 투표했습니다.`;
-                bestClubInput.value = votedClub; 
+            // 투표 여부 확인 (hasVoted 필드 사용)
+            if (studentData && studentData.hasVoted) {
+                bestClubVoteStatus.textContent = `✅ 이미 투표했습니다.`;
+                bestClubInput.value = ''; // 투표했으니 입력창 비우기
                 bestClubInput.disabled = true;
                 submitBestClubBtn.disabled = true;
             } else {
@@ -322,6 +332,16 @@ async function checkTenStamps() {
             }
         } else {
             tenStampsMessage.classList.add('hidden');
+            // 스탬프 개수가 10개 미만이면 '출석인정' 필드 제거
+            if (studentData && studentData.hasTenStamps === "출석인정") {
+                await remove(ref(database, `students/${currentStudentId}/hasTenStamps`));
+                console.log(`학생 ${currentStudentId}의 출석인정 상태가 취소되었습니다.`);
+            }
+            // 스탬프 개수가 10개 미만이면 투표 관련 메시지 숨김
+            bestClubVoteStatus.textContent = '';
+            bestClubInput.value = '';
+            bestClubInput.disabled = true;
+            submitBestClubBtn.disabled = true;
         }
     } catch (error) {
         console.error("Firebase 스탬프 개수 확인 또는 투표 상태 로드 실패:", error);
@@ -340,15 +360,38 @@ submitBestClubBtn.addEventListener('click', async () => {
     }
 
     if (clubName) {
-        if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
-            try {
-                await set(ref(database, `votes/${currentStudentId}`), clubName);
-                alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
-                checkTenStamps(); 
-            } catch (error) {
-                console.error("Firebase 투표 저장 실패:", error);
-                alert("투표 저장에 실패했습니다: " + error.message);
+        try {
+            const studentRef = ref(database, `students/${currentStudentId}`);
+            const studentSnapshot = await get(studentRef);
+            const studentData = studentSnapshot.val();
+
+            if (studentData && studentData.hasVoted) {
+                alert('이미 투표하셨습니다. 투표는 한 번만 가능합니다.');
+                return;
             }
+
+            // 동아리 이름이 CLUB_NAMES 배열에 포함되어 있는지 확인 (유효성 검사)
+            if (!CLUB_NAMES.includes(clubName)) {
+                alert('유효하지 않은 동아리 이름입니다. 정확한 이름을 입력해주세요.');
+                return;
+            }
+
+            if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
+                // 투표 수 증가 트랜잭션 (동시성 문제 방지)
+                const clubVotesRef = ref(database, `clubVotes/${clubName}`);
+                await runTransaction(clubVotesRef, (currentVotes) => {
+                    return (currentVotes || 0) + 1;
+                });
+
+                // 학생의 투표 여부 기록
+                await update(studentRef, { hasVoted: true });
+
+                alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
+                checkTenStamps(); // UI 업데이트를 위해 다시 호출 (투표 완료 메시지 및 버튼 비활성화)
+            }
+        } catch (error) {
+            console.error("Firebase 투표 저장 실패:", error);
+            alert("투표 저장에 실패했습니다: " + error.message);
         }
     } else {
         alert('투표할 동아리 이름을 입력해주세요.');
@@ -434,7 +477,7 @@ async function handleClassStampControl(event) {
                     qrResult.textContent = `✅ ${clubName} 스탬프가 관리자에 의해 찍혔습니다!`; // 동아리 이름 사용
                     alert(`${clubName} 스탬프가 찍혔습니다.`);
                     console.log(`${clubName} 스탬프 관리자 찍기 완료.`);
-                    checkTenStamps();
+                    checkTenStamps(); // 관리자 모드에서 찍을 때도 10개 달성 여부 확인
                 } else { 
                     if (confirm(`${clubName} 스탬프를 취소하시겠습니까?`)) { // 동아리 이름 사용
                         await remove(ref(database, stampPath));
@@ -442,7 +485,7 @@ async function handleClassStampControl(event) {
                         qrResult.textContent = `❌ ${clubName} 스탬프가 관리자에 의해 취소되었습니다.`; // 동아리 이름 사용
                         alert(`${clubName} 스탬프가 취소되었습니다.`);
                         console.log(`${clubName} 스탬프 관리자 취소 완료.`);
-                        checkTenStamps();
+                        checkTenStamps(); // 관리자 모드에서 취소할 때도 10개 달성 여부 확인
                     }
                 }
             }
@@ -475,7 +518,7 @@ async function fillAllStamps() {
             });
             qrResult.textContent = '모든 스탬프가 채워졌습니다.';
             console.log('모든 스탬프 채우기 완료.');
-            checkTenStamps();
+            checkTenStamps(); // 모든 스탬프 채운 후 10개 달성 여부 확인
         } catch (error) {
             console.error("Firebase 모든 스탬프 채우기 실패:", error);
             alert("모든 스탬프 채우기에 실패했습니다: " + error.message);
@@ -508,11 +551,14 @@ submitInfoBtn.addEventListener('click', async () => {
         const studentId = `${grade}-${classNum}-${number}`; 
 
         try {
+            // 학생 정보 저장 시 hasTenStamps와 hasVoted 필드도 초기화
             await set(ref(database, `students/${studentId}`), {
                 grade: grade,
                 classNum: classNum,
                 number: number,
-                name: name
+                name: name,
+                hasTenStamps: null, // 초기화
+                hasVoted: null     // 초기화
             });
             localStorage.setItem('currentStudentId', studentId); 
             studentDisplay.textContent = `학번: ${grade}학년 ${classNum}반 ${number}번 | 이름: ${name}`;
