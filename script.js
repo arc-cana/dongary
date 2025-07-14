@@ -28,35 +28,44 @@ function loadGoogleAPI() {
         gisScript.async = true;
         gisScript.defer = true;
         gisScript.onload = () => {
-            gisLoaded = true; // 로드 완료 플래그 설정
-            tokenClient = google.accounts.oauth2.initOAuth2TokenClient({
-                client_id: CLIENT_ID,
-                scope: SCOPES,
-                callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
-            });
-            console.log("Google Identity Services 로드 완료.");
-
-            // gapi (Google API 클라이언트) 라이브러리 로드
-            const gapiScript = document.createElement('script');
-            gapiScript.src = 'https://apis.google.com/js/api.js';
-            gapiScript.onload = () => {
-                gapi.load('client', () => {
-                    gapi.client.init({
-                        discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
-                    }).then(() => {
-                        console.log("Google API 클라이언트 로드 및 초기화 완료.");
-                        resolve();
-                    }).catch(err => {
-                        console.error("gapi.client.init 실패:", err);
-                        reject(err);
+            // GIS 라이브러리가 완전히 준비될 시간을 약간 줍니다.
+            setTimeout(() => {
+                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initOAuth2TokenClient === 'function') {
+                    gisLoaded = true; // 로드 완료 플래그 설정
+                    tokenClient = google.accounts.oauth2.initOAuth2TokenClient({
+                        client_id: CLIENT_ID,
+                        scope: SCOPES,
+                        callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
                     });
-                });
-            };
-            gapiScript.onerror = (err) => {
-                console.error("gapi 스크립트 로드 실패:", err);
-                reject(err);
-            };
-            document.head.appendChild(gapiScript);
+                    console.log("Google Identity Services 로드 완료.");
+
+                    // gapi (Google API 클라이언트) 라이브러리 로드
+                    const gapiScript = document.createElement('script');
+                    gapiScript.src = 'https://apis.google.com/js/api.js';
+                    gapiScript.onload = () => {
+                        gapi.load('client', () => {
+                            gapi.client.init({
+                                discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+                            }).then(() => {
+                                console.log("Google API 클라이언트 로드 및 초기화 완료.");
+                                resolve();
+                            }).catch(err => {
+                                console.error("gapi.client.init 실패:", err);
+                                reject(err);
+                            });
+                        });
+                    };
+                    gapiScript.onerror = (err) => {
+                        console.error("gapi 스크립트 로드 실패:", err);
+                        reject(err);
+                    };
+                    document.head.appendChild(gapiScript);
+                } else {
+                    // console.error("Google Identity Services 라이브러리가 완전히 로드되지 않았거나 initOAuth2TokenClient를 찾을 수 없습니다.");
+                    // alert("앱 초기화 중 오류가 발생했습니다. (Google 인증 초기화 실패)"); // 사용자에게 알림
+                    reject(new Error("GIS initOAuth2TokenClient not found or not fully loaded"));
+                }
+            }, 100); // 100ms 지연
         };
         gisScript.onerror = (err) => {
             console.error("GIS 스크립트 로드 실패:", err);
@@ -70,6 +79,7 @@ function loadGoogleAPI() {
 async function checkAuthAndGetToken() {
     return new Promise((resolve, reject) => {
         if (!gisLoaded || !tokenClient) {
+            // GIS나 tokenClient가 로드되지 않았으면 다시 로드 시도
             loadGoogleAPI().then(() => {
                 requestToken();
             }).catch(reject);
@@ -386,7 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentStudent = null; // 현재 확인된 학생 정보 저장
     let currentStampedClubs = []; // 현재 학생이 찍은 스탬프 동아리 ID 배열
-    let clubDataList = []; // 동아리 목록 데이터를 저장할 변수
+    let clubDataList = []; // 동아리 목록 데이터를 저장할 변
 
     // 화면 전환 함수 - index.html의 실제 ID에 맞춰서 수정
     function showScreen(screenElement) {
