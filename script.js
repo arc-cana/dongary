@@ -11,7 +11,7 @@ const SPREADSHEET_ID = "1UNytXjxoJKbQ1sP7PpEm6r-boVn46bNJzJVPRA_EQY8"; // 실제
 
 const STUDENTS_SHEET_NAME = "Students"; // Students 시트 이름
 const STAMPS_SHEET_NAME = "Stamps"; // Stamps 시트 이름
-const CLUB_LIST_SHEET_NAME = "ClubList"; // ClubList 시트 이름 (동아리 목록)
+const CLUB_LIST_SHEET_NAME = "ClubList"; // ClubList 시트 이름 (git a동아리 목록)
 
 // Sheets API에 대한 스코프 (권한)
 const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
