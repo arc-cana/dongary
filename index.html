@@ -3,104 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>동아리 발표회</title>
+    <title>2025 동아리 발표회 스탬프 투어</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>동아리 발표회</h1>
 
-        <div class="qr-video-container">
-            <video id="qr-video" playsinline></video>
+    <div id="splash-screen" class="screen">
+        <div class="splash-content">
+            <h1>학번과 이름을 입력해 주세요</h1>
+            <div class="input-box">
+                <p>
+                    (<input type="number" id="inputGrade" placeholder="학년" min="1" max="6">)학년
+                    (<input type="number" id="inputClass" placeholder="반" min="1" max="10">)반
+                    (<input type="number" id="inputNumber" placeholder="번호" min="1" max="50">)번호
+                </p>
+                <p>이름: <input type="text" id="inputName" placeholder="이름"></p>
+            </div>
+            <button id="submitInfoBtn">시작하기</button>
         </div>
-        <p id="qr-result">QR 코드를 스캔 중...</p>
-
-        <div class="stamp-container">
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="1반 스탬프" class="stamp hidden" id="stamp-1">
-                <p class="class-label">1반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="2반 스탬프" class="stamp hidden" id="stamp-2">
-                <p class="class-label">2반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="3반 스탬프" class="stamp hidden" id="stamp-3">
-                <p class="class-label">3반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="4반 스탬프" class="stamp hidden" id="stamp-4">
-                <p class="class-label">4반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="5반 스탬프" class="stamp hidden" id="stamp-5">
-                <p class="class-label">5반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="6반 스탬프" class="stamp hidden" id="stamp-6">
-                <p class="class-label">6반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="7반 스탬프" class="stamp hidden" id="stamp-7">
-                <p class="class-label">7반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="8반 스탬프" class="stamp hidden" id="stamp-8">
-                <p class="class-label">8반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="9반 스탬프" class="stamp hidden" id="stamp-9">
-                <p class="class-label">9반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="10반 스탬프" class="stamp hidden" id="stamp-10">
-                <p class="class-label">10반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="11반 스탬프" class="stamp hidden" id="stamp-11">
-                <p class="class-label">11반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="12반 스탬프" class="stamp hidden" id="stamp-12">
-                <p class="class-label">12반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="13반 스탬프" class="stamp hidden" id="stamp-13">
-                <p class="class-label">13반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="14반 스탬프" class="stamp hidden" id="stamp-14">
-                <p class="class-label">14반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="15반 스탬프" class="stamp hidden" id="stamp-15">
-                <p class="class-label">15반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="16반 스탬프" class="stamp hidden" id="stamp-16">
-                <p class="class-label">16반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="17반 스탬프" class="stamp hidden" id="stamp-17">
-                <p class="class-label">17반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="18반 스탬프" class="stamp hidden" id="stamp-18">
-                <p class="class-label">18반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="19반 스탬프" class="stamp hidden" id="stamp-19">
-                <p class="class-label">19반</p>
-            </div>
-            <div class="stamp-item">
-                <img src="./images/stamp_base.png" alt="20반 스탬프" class="stamp hidden" id="stamp-20">
-                <p class="class-label">20반</p>
-            </div>
-        </div>
-
-        <div class="controls"></div>
     </div>
 
+    <div id="main-content" class="screen hidden">
+        <div class="header">
+            <h2>2025 동아리 발표회</h2>
+            <div id="student-display"></div> </div>
+
+        <div class="qr-scanner-container">
+            <div id="qr-video"></div> <div id="qr-result">QR 코드를 스캔 중...</div>
+        </div>
+
+        <div id="ten-stamps-message" class="hidden message-box">
+            <p>🎉 10개 이상 스탬프 달성! 축하합니다! 🎉</p>
+            <p>가장 잘했다고 생각하는 동아리를 투표해주세요.</p>
+            <input type="text" id="bestClubInput" placeholder="동아리 이름 입력">
+            <button id="submitBestClubBtn">투표하기</button>
+            <p id="bestClubVoteStatus"></p> </div>
+
+        <div class="stamps-grid">
+            <img src="images/stamp_base.png" alt="바이오시너지" class="stamp" id="stamp-1">
+            <img src="images/stamp_base.png" alt="네이처" class="stamp" id="stamp-2">
+            <img src="images/stamp_base.png" alt="컴싸" class="stamp" id="stamp-3">
+            <img src="images/stamp_base.png" alt="일월칠장" class="stamp" id="stamp-4">
+            <img src="images/stamp_base.png" alt="공학동아리 십이일반" class="stamp" id="stamp-5">
+            <img src="images/stamp_base.png" alt="세갈길" class="stamp" id="stamp-6">
+            <img src="images/stamp_base.png" alt="초아" class="stamp" id="stamp-7">
+            <img src="images/stamp_base.png" alt="그린업" class="stamp" id="stamp-8">
+            <img src="images/stamp_base.png" alt="아토리움" class="stamp" id="stamp-9">
+            <img src="images/stamp_base.png" alt="언론커스" class="stamp" id="stamp-10">
+            <img src="images/stamp_base.png" alt="공학동아리 공자" class="stamp" id="stamp-11">
+            <img src="images/stamp_base.png" alt="독서토론동아리 로직" class="stamp" id="stamp-12">
+            <img src="images/stamp_base.png" alt="사회과융합탐구" class="stamp" id="stamp-13">
+            <img src="images/stamp_base.png" alt="플라이어웨이" class="stamp" id="stamp-14">
+            <img src="images/stamp_base.png" alt="special booth" class="stamp" id="stamp-15">
+        </div>
+
+        <div class="controls">
+            </div>
+        <button id="showLocationGuideBtn">동아리 위치 안내</button>
+    </div>
+
+    <div id="location-guide-screen" class="screen hidden">
+        <h2>동아리 위치 안내</h2>
+        <div class="club-list-container">
+            <h3>2025 동아리 발표회 동아리 목록 및 장소</h3>
+            <ul>
+                <li>1. 바이오시너지 (2층 시실)</li>
+                <li>2. 네이처 (2층 시실)</li>
+                <li>3. 컴싸 (2층 A실)</li>
+                <li>4. 일월칠장 (3-1)</li>
+                <li>5. 공학동아리 십이일반 (3-2)</li>
+                <li>6. 세갈길 (3-3)</li>
+                <li>7. 초아 (3-4)</li>
+                <li>8. 그린업 (3-5)</li>
+                <li>9. 아토리움 (3-6)</li>
+                <li>10. 언론커스 (3-7)</li>
+                <li>11. 공학동아리 공자 (3-8)</li>
+                <li>12. 독서토론동아리 로직 (3-9)</li>
+                <li>13. 사회과융합탐구 (3-10)</li>
+                <li>14. 플라이어웨이 (강당)</li>
+                <li>15. special booth (다목적실 A, B)</li>
+            </ul>
+            <p>※ 부스 운영에 참여하지 않는 **체력단련반, 인생책방 I, 인생책방 II 동아리**에게는 스탬프를 받을 수 없습니다.</p>
+            <p>※ 3학년 모든 학생은 **special booth**에 반드시 참여해야 합니다.</p>
+            <p>※ 자세한 내용은 발표회 준비위원의 안내를 따라주세요.</p>
+        </div>
+        <button id="closeLocationGuideBtn">뒤로 가기</button>
+    </div>
+
+    <script src="html5-qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
