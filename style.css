@@ -7,32 +7,34 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    background-image: url('images/background.jpg'); /* 배경 이미지 설정 */
-    background-size: cover; /* 배경 이미지가 화면을 꽉 채우도록 */
-    background-position: center; /* 배경 이미지 중앙 정렬 */
-    background-repeat: no-repeat; /* 배경 이미지 반복 없음 */
+    background-image: url('images/background.jpg'); /* 전체 앱 배경 이미지 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     color: #333;
     overflow: hidden; /* 스크롤바 숨김 */
-    -webkit-font-smoothing: antialiased; /* 폰트 부드럽게 */
-    -moz-osx-font-smoothing: grayscale; /* 폰트 부드럽게 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* 모든 화면에 적용되는 공통 스타일 */
 .screen {
     width: 100%;
     height: 100vh; /* 뷰포트 높이 전체 */
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: absolute;
+    justify-content: center; /* 세로 중앙 정렬 */
+    align-items: center; /* 가로 중앙 정렬 */
+    position: absolute; /* 겹쳐지는 화면을 위한 절대 위치 */
     top: 0;
     left: 0;
-    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out; /* 전환 효과 추가 */
-    background-color: rgba(0, 0, 0, 0.5); /* 기본 배경 이미지 위에 반투명 오버레이 */
-    box-sizing: border-box; /* 패딩, 보더가 너비에 포함되도록 */
-    padding: 20px; /* 전체 화면 패딩 */
+    transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out; /* 화면 전환 효과 */
+    background-color: rgba(0, 0, 0, 0.5); /* 기본 배경 위에 반투명 오버레이 */
+    box-sizing: border-box;
+    padding: 20px;
 }
 
+/* 숨겨진 화면에 적용되는 스타일 */
 .hidden {
     opacity: 0;
     visibility: hidden;
@@ -41,95 +43,67 @@ body {
 
 /* 스플래시 화면 스타일 */
 #splash-screen {
-    background-color: transparent; /* 배경 이미지를 직접 보여주기 위해 투명하게 */
-    color: #fff; /* 텍스트 색상 흰색 */
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* 텍스트 그림자 */
-    justify-content: flex-start; /* 상단 정렬 */
-    padding-top: 10vh; /* 상단 여백 */
-    align-items: center; /* 중앙 정렬 */
-    background-image: url('images/intro_screen_bg.jpg'); /* 스플래시 화면 배경 */
+    background-color: transparent; /* 배경 이미지 직접 노출 */
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    background-image: url('images/intro_screen_bg.jpg'); /* 스플래시 화면 전용 배경 */
     background-size: cover;
     background-position: center;
+    justify-content: center; /* 내용 중앙 정렬 */
+    padding-top: 0; /* 필요시 조정 */
 }
 
 .splash-content {
-    /* 기존 스타일 유지 */
-    background-color: transparent;
-    border: none;
-    padding: 0;
+    background-color: rgba(255, 255, 255, 0.85); /* 입력 박스 배경 */
+    border-radius: 15px;
+    padding: 30px;
     text-align: center;
-    box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    max-width: 90%;
-    
-    /* 학번/이름 입력 박스 위치 조정 - 이 부분은 스플래시 화면이 정상 작동한다 하셨으니 그대로 둡니다. */
-    position: relative; 
-    top: 15vh; 
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    max-width: 400px; /* 적절한 너비 제한 */
+    width: 90%; /* 반응형 너비 */
 }
 
 .splash-content h1 {
-    /* 기존 스타일 유지 */
     font-size: 2.5em;
-    margin-bottom: 30px;
-    color: #ffe600;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    color: #000; /* 어두운 배경에 대비 */
+    text-shadow: none; /* 배경이 밝아지므로 그림자 제거 */
     line-height: 1.2;
-
-    /* "학번과 이름을 입력해 주세요" 문구 위치 조정 - 이 부분은 스플래시 화면이 정상 작동한다 하셨으니 그대로 둡니다. */
-    position: relative;
-    top: -15vh;
 }
 
-.input-box {
-    position: relative;
-    width: 250px;
-    height: 140px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding-bottom: 20px;
-}
-
-.input-box p {
-    font-size: 1.2em;
-    margin: 5px 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    color: #333;
-    font-weight: bold;
-}
-
-.input-box input[type="number"],
-.input-box input[type="text"] {
-    width: 60px;
-    padding: 5px;
-    margin: 0 3px;
-    border: none;
-    border-bottom: 1px solid #333;
-    background-color: transparent;
-    color: #333;
+.splash-content p {
     font-size: 1.1em;
+    color: #555;
+    margin-bottom: 25px;
+}
+
+.input-group {
+    display: flex;
+    flex-wrap: wrap; /* 작은 화면에서 줄바꿈 */
+    justify-content: center;
+    gap: 10px; /* 입력 필드 사이 간격 */
+    margin-bottom: 25px;
+}
+
+.input-group input[type="number"],
+.input-group input[type="text"] {
+    width: 70px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1em;
     text-align: center;
+    box-sizing: border-box; /* 패딩이 너비에 포함되도록 */
+}
+
+.input-group input[type="text"] {
+    width: 120px; /* 이름 필드 너비 */
+}
+
+.input-group input:focus {
+    border-color: #007bff;
     outline: none;
-    transition: border-color 0.3s ease;
-    -moz-appearance: textfield;
-}
-.input-box input[type="number"]::-webkit-outer-spin-button,
-.input-box input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-.input-box input[type="text"] {
-    width: 100px;
-}
-
-.input-box input:focus {
-    border-color: #4CAF50;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 #submitInfoBtn {
@@ -140,7 +114,6 @@ body {
     border-radius: 8px;
     font-size: 1.4em;
     cursor: pointer;
-    margin-top: 15px;
     transition: background-color 0.3s ease, transform 0.2s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
@@ -150,24 +123,23 @@ body {
     transform: translateY(-2px);
 }
 
-/* 메인 콘텐츠 및 위치 안내 화면 공통 스타일 */
+/* 메인 콘텐츠 화면 스타일 */
 #main-content, #location-guide-screen {
-    background-color: rgba(255, 255, 255, 0.95);
+    background-color: rgba(255, 255, 255, 0.95); /* 거의 불투명한 흰색 배경 */
     color: #333;
     border-radius: 15px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
     padding: 20px;
     max-width: 90%;
-    max-height: 90vh; /* 혹시 모를 경우를 대비해 이 값을 조금 더 유연하게 가져갑니다. */
+    max-height: 90vh; /* 화면 높이 제한, 내용이 넘칠 경우 스크롤 */
     overflow-y: auto;
     display: flex;
     flex-direction: column;
     justify-content: flex-start; /* 상단부터 채우기 */
     align-items: center; /* 가로 중앙 정렬 */
-    /* 기존에는 .screen에 position:absolute가 있었지만, main-content에는 별도의 position이 없었습니다.
-       이는 flex 컨테이너로서의 역할에 더 집중하기 위함입니다.
-       만약 .screen의 absolute positioning이 문제를 일으킨다면, 이 곳에 명시적으로 top:0; left:0; 등을 추가할 수 있습니다.
-       현재는 .screen 클래스에 position: absolute; top: 0; left: 0; 이 있으므로 main-content도 이를 따릅니다. */
+    position: absolute; /* .screen의 기본 스타일을 따름 */
+    top: 0;
+    left: 0;
 }
 
 #main-content .header, #location-guide-screen h2 {
@@ -189,21 +161,19 @@ body {
 
 .qr-scanner-container {
     width: 100%;
-    max-width: 350px;
-    margin: 0 auto 20px auto;
+    max-width: 350px; /* QR 스캐너 최대 너비 */
+    margin: 0 auto 20px auto; /* 중앙 정렬, 하단 여백 */
     text-align: center;
-    /* 이전에는 여기에 없던 position 관련 속성을 추가했었는지 확인합니다.
-       기본적으로 flexbox 아이템이므로 position이 필요 없습니다. */
 }
 
 #qr-video {
     width: 100%;
-    height: 250px;
-    background-color: #000;
+    height: 250px; /* QR 비디오 영역 높이 */
+    background-color: #000; /* 비디오 로드 전 배경색 */
     margin-bottom: 10px;
     border-radius: 8px;
     overflow: hidden;
-    /* position 관련 속성 제거 */
+    display: block; /* 인라인 요소로 인한 여백 방지 */
 }
 
 #qr-result {
@@ -213,7 +183,8 @@ body {
     margin-top: 5px;
 }
 
-.message-box {
+/* 스탬프 10개 이상 메시지 박스 */
+#ten-stamps-message.message-box {
     background-color: #e0ffe0;
     border: 1px solid #a0d0a0;
     padding: 15px;
@@ -225,14 +196,14 @@ body {
     width: 100%;
     box-sizing: border-box;
 }
-.message-box input[type="text"] {
+#ten-stamps-message.message-box input[type="text"] {
     width: calc(100% - 20px);
     padding: 8px;
     margin: 10px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-.message-box button {
+#ten-stamps-message.message-box button {
     background-color: #4CAF50;
     color: white;
     padding: 10px 20px;
@@ -241,7 +212,7 @@ body {
     cursor: pointer;
     font-size: 1em;
 }
-.message-box button:hover {
+#ten-stamps-message.message-box button:hover {
     background-color: #45a049;
 }
 #bestClubVoteStatus {
@@ -250,9 +221,10 @@ body {
     color: #555;
 }
 
+/* 스탬프 그리드 */
 .stamps-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); /* 반응형 그리드 */
     gap: 10px;
     margin-top: 20px;
     padding: 10px;
@@ -260,22 +232,22 @@ body {
     border-radius: 8px;
     width: 100%;
     box-sizing: border-box;
-    /* position 관련 속성 제거 */
 }
 
 .stamp {
     width: 100%;
     height: auto;
-    max-width: 80px;
+    max-width: 80px; /* 스탬프 이미지 최대 크기 */
     display: block;
     margin: 0 auto;
     transition: transform 0.2s ease, opacity 0.5s ease;
 }
 
 .stamp.hidden {
-    opacity: 0.2;
+    opacity: 0.2; /* 안 찍힌 스탬프는 흐리게 */
 }
 
+/* 컨트롤 버튼 (관리자 모드 버튼) */
 .controls {
     display: flex;
     flex-wrap: wrap;
@@ -294,9 +266,9 @@ body {
     cursor: pointer;
     font-size: 0.9em;
     transition: background-color 0.3s ease;
-    flex-grow: 1;
-    min-width: 120px;
-    max-width: 200px;
+    flex-grow: 1; /* 유연하게 공간 차지 */
+    min-width: 120px; /* 최소 너비 */
+    max-width: 200px; /* 최대 너비 */
 }
 
 .controls button:hover, #showLocationGuideBtn:hover, #closeLocationGuideBtn:hover {
@@ -314,7 +286,7 @@ body {
 /* 동아리 위치 안내 화면 내부 스타일 */
 #location-guide-screen {
     justify-content: flex-start;
-    padding-top: 50px;
+    padding-top: 50px; /* 상단 여백 추가 */
     text-align: center;
 }
 
@@ -366,14 +338,12 @@ body {
     .splash-content h1 {
         font-size: 1.8em;
     }
-    .input-box p {
-        font-size: 1em;
-        flex-direction: column;
+    .input-group input[type="number"],
+    .input-group input[type="text"] {
+        width: calc(50% - 15px); /* 두 개씩 정렬 */
     }
-    .input-box input[type="number"],
-    .input-box input[type="text"] {
-        width: calc(100% - 10px);
-        margin: 5px 0;
+    .input-group input[type="text"] {
+        width: calc(100% - 20px); /* 이름은 한 줄 차지 */
     }
     #submitInfoBtn {
         font-size: 1.2em;
