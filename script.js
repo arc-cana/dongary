@@ -30,7 +30,7 @@ let currentStudentInfo = null; // 현재 로그인한 학생 정보를 저장할
 
 // ====================================================================
 // !!! 중요: 이 URL을 여러분의 Google Apps Script 웹 앱 URL로 변경하세요 !!!
-const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxN2YmrCcKXp3Eek_hu6ojJgEZ3JEzcabzSKQov2UlL5p2vpO6Itu9SnlXoGThoxVM_mw/exec";
+const APPS_SCRIPT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbw8V6U3BBPZRGAzF-7w35c84gpUtus_5qicfPSUV4W2_fMVOCGJwLgHT2fqDQuhRNlKKg/exec";
 // 예시: "https://script.google.com/macros/s/AKfycbz_YOUR_UNIQUE_ID_HERE/exec";
 // ====================================================================
 
