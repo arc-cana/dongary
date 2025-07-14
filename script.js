@@ -1,379 +1,331 @@
-// script.js 전체 코드
 
-const splashScreen = document.getElementById('splash-screen');
-const mainContent = document.getElementById('main-content');
-const submitInfoBtn = document.getElementById('submitInfoBtn');
-const inputGrade = document.getElementById('inputGrade');
-const inputClass = document.getElementById('inputClass');
-const inputNumber = document.getElementById('inputNumber');
-const inputName = document.getElementById('inputName');
-
-const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
-const locationGuideScreen = document.getElementById('location-guide-screen');
-
-const TOTAL_CLASSES = 20; // 전체 동아리(스탬프) 개수
-const stampImages = document.querySelectorAll('.stamp');
-const qrResultDiv = document.getElementById('qr-result');
-const controlsDiv = document.querySelector('.controls');
+// HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const qrVideo = document.getElementById('qr-video');
+const qrResult = document.getElementById('qr-result');
+const stampImages = document.querySelectorAll('.stamp'); // 모든 스탬프 이미지 (hidden 클래스 가진 것들)
 
-let html5QrCode; // QR 스캐너 인스턴스를 저장할 변수 (전역 접근 가능하도록)
-let isMasterMode = false; // 관리자 모드 여부
+// QR 스캔 라이브러리 (jsQR)를 사용하기 위한 변수
 
-// --- 화면 전환 헬퍼 함수 추가 ---
-function hideAllScreens() {
-    splashScreen.classList.add('hidden');
-    mainContent.classList.add('hidden');
-    locationGuideScreen.classList.add('hidden');
-}
+// --- QR 코드 유효성 검사를 위한 비밀 값들 ---
+const VALID_QR_PREFIX = "MY_STAMP_APP:";
+const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A"; // QR 코드 생성 시 사용한 키와 동일해야 합니다!
+// ---------------------------------------------
 
-function showSplashScreen() {
-    hideAllScreens();
-    splashScreen.classList.remove('hidden');
-    console.log("화면: 스플래시");
-}
+// --- 관리자 모드 관련 설정 ---
+const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN"; // **관리자 모드 활성화용 QR 코드 내용 (비밀!)**
+// ADMIN_PASSWORD 변수는 이제 없습니다. QR 스캔만으로 진입.
 
-function showMainContentScreen() {
-    hideAllScreens();
-    mainContent.classList.remove('hidden');
-    console.log("화면: 메인 (QR)");
-}
+// 마스터 키와 각 반의 비밀번호를 설정하세요! (4자리 숫자)
+const MASTER_KEY = "1234"; // **마스터 키 (4자리 숫자) - 10반 제어 버튼에서 입력**
+const CLASS_PASSWORDS = { // **각 반별 비밀번호 (4자리 숫자) - 20개 반 모두 설정**
+    '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
+    '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
+    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005",
+    '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010"
+};
+const TOTAL_CLASSES = 20; // 총 반 개수 설정
 
-function showLocationGuideScreen() {
-    hideAllScreens();
-    locationGuideScreen.classList.remove('hidden');
-    console.log("화면: 위치 안내");
-}
-// --- 화면 전환 헬퍼 함수 끝 ---
+let isAdminMode = false; // 관리자 모드 상태 변수
+let isMasterMode = false; // 마스터 모드 상태 변수 (10반 비밀번호 칸에서 마스터 키 입력 시 활성화)
 
-
-// 학생 정보가 localStorage에 있는지 확인하는 함수
-function checkStudentInfo() {
-    const studentInfo = localStorage.getItem('studentInfo');
-    if (studentInfo) {
-        showMainContentScreen(); // 메인 화면 표시
-        loadStampState(); // 스탬프 상태 로드
-        startQrScanner(); // QR 스캐너 시작
-    } else {
-        showSplashScreen(); // 스플래시 화면 표시
-    }
-}
-
-// 스탬프 상태 로드 함수
-function loadStampState() {
-    const studentInfo = JSON.parse(localStorage.getItem('studentInfo'));
-    if (!studentInfo) return; // 학생 정보가 없으면 로드할 스탬프도 없음
-
-    const stampsData = localStorage.getItem(`stamps_${studentInfo.grade}_${studentInfo.sClass}_${studentInfo.number}`);
-    const stampedClasses = stampsData ? JSON.parse(stampsData) : [];
-
-    stampImages.forEach(img => {
-        const stampId = parseInt(img.id.replace('stamp-', ''), 10);
-        if (stampedClasses.includes(stampId)) {
-            img.classList.remove('hidden'); // 찍힌 스탬프는 보이게
-        } else {
-            img.classList.add('hidden'); // 안 찍힌 스탬프는 숨김
-        }
-    });
-
-    checkAllStampsCollected(); // 모든 스탬프가 찍혔는지 확인
-}
-
-// 스탬프 적용 함수
-function applyStamp(stampId) {
-    const studentInfo = JSON.parse(localStorage.getItem('studentInfo'));
-    if (!studentInfo) {
-        alert('학생 정보가 없어 스탬프를 적용할 수 없습니다. 다시 시작해주세요.');
-        return;
-    }
-
-    const stampsKey = `stamps_${studentInfo.grade}_${studentInfo.sClass}_${studentInfo.number}`;
-    const stampsData = localStorage.getItem(stampsKey);
-    let stampedClasses = stampsData ? JSON.parse(stampsData) : [];
-
-    const parsedStampId = parseInt(stampId, 10);
-
-    if (isNaN(parsedStampId) || parsedStampId < 1 || parsedStampId > TOTAL_CLASSES) {
-        qrResultDiv.textContent = '유효하지 않은 QR 코드입니다.';
-        console.error('Invalid QR Code:', stampId);
-        return;
-    }
-
-    if (stampedClasses.includes(parsedStampId)) {
-        qrResultDiv.textContent = `이미 ${parsedStampId}번 스탬프를 받았습니다!`;
-        return;
-    }
-
-    stampedClasses.push(parsedStampId);
-    localStorage.setItem(stampsKey, JSON.stringify(stampedClasses));
-
-    const stampImg = document.getElementById(`stamp-${parsedStampId}`);
-    if (stampImg) {
-        stampImg.classList.remove('hidden');
-        qrResultDiv.textContent = `${parsedStampId}번 스탬프를 받았습니다!`;
-    }
-
-    checkAllStampsCollected(); // 모든 스탬프가 찍혔는지 확인
-}
-
-// 모든 스탬프를 모았는지 확인하는 함수
-function checkAllStampsCollected() {
-    const studentInfo = JSON.parse(localStorage.getItem('studentInfo'));
-    if (!studentInfo) return;
-
-    const stampsKey = `stamps_${studentInfo.grade}_${studentInfo.sClass}_${studentInfo.number}`;
-    const stampsData = localStorage.getItem(stampsKey);
-    const stampedClasses = stampsData ? JSON.parse(stampsData) : [];
-
-    if (stampedClasses.length >= TOTAL_CLASSES) {
-        qrResultDiv.textContent = '모든 스탬프를 다 모았습니다! 축하합니다!';
-        // 추가적인 이벤트 (예: 완료 메시지, 상품 증정 안내 등)
-    }
-}
-
-// QR 스캐너 시작 함수 (수정됨)
-async function startQrScanner() {
-    console.log("QR 스캐너 시작 시도...");
-
-    const qrCodeRegionId = "qr-video";
-    qrResultDiv.textContent = 'QR 코드를 스캔 중...'; // QR 결과 텍스트 초기화
-    qrVideo.classList.remove('hidden'); // 비디오 요소가 보이도록 확실히 설정 (CSS의 display: none을 제거)
-
-    // 스캐너가 이미 실행 중이라면 불필요한 재시작 방지
-    if (html5QrCode && html5QrCode.isScanning) {
-        console.log("QR 스캐너가 이미 실행 중입니다. 재시작하지 않습니다.");
-        return;
-    }
-    
-    // 이전에 생성된 스캐너 인스턴스가 있다면, 중지 후 재사용 준비
-    if (html5QrCode) {
-        try {
-            await html5QrCode.stop(); // 완전히 clear 대신 stop()으로 스트림만 멈춤
-            console.log("기존 QR 스캐너 인스턴스 stop 완료.");
-        } catch (err) {
-            console.warn("기존 QR 스캐너 stop 중 오류 발생:", err);
-            // 오류가 발생해도 계속 진행 (새로운 인스턴스를 만들거나 재시도)
-        }
-    }
-
-    // 새로운 Html5Qrcode 인스턴스 생성 (필요하다면)
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode(qrCodeRegionId);
-        console.log("새로운 Html5Qrcode 인스턴스 생성됨.");
-    } else {
-        console.log("기존 Html5Qrcode 인스턴스 재사용.");
-    }
-
-    const config = { 
-        fps: 10, 
-        qrbox: { width: 250, height: 250 },
-        // 비디오 해상도 제약 조건 추가
-        videoConstraints: {
-            facingMode: "environment", // 후면 카메라 우선
-            width: { ideal: 1280 },  // 가로 1280px (이상적인 해상도)
-            height: { ideal: 720 }   // 세로 720px (이상적인 해상도)
-        }
-    };
-
+// --- 웹캠 시작 함수 ---
+async function startWebcam() {
     try {
-        await html5QrCode.start(
-            config.videoConstraints, // videoConstraints를 start 함수의 첫 번째 인자로 직접 전달
-            config,
-            (decodedText, decodedResult) => {
-                // QR 스캔 성공 시 동작
-                qrResultDiv.textContent = `스캔 완료: ${decodedText}`;
-                console.log(`QR 코드 감지: ${decodedText}`);
-                applyStamp(decodedText);
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        
+        qrVideo.srcObject = stream;
+        qrVideo.setAttribute('playsinline', true);
+        qrVideo.play();
 
-                // 스캔 성공 후 잠시 스캐너를 중지했다가 다시 시작 (중복 스캔 방지)
-                if (html5QrCode.isScanning) {
-                    console.log("QR 스캔 성공, 스캐너 일시 중지...");
-                    html5QrCode.stop().then(ignore => {
-                        console.log("스캐너 일시 중지 완료.");
-                        setTimeout(() => {
-                            console.log("성공 스캔 지연 후 스캐너 재시작...");
-                            startQrScanner(); // 2초 후 재시작
-                        }, 2000); 
-                    }).catch(err => {
-                        console.error("스캔 성공 후 스캐너 중지 실패:", err);
-                    });
-                }
-            },
-            (errorMessage) => {
-                // QR 스캔 진행 중 (오류 아님)
-            }
-        );
-        console.log("QR 스캐너 성공적으로 시작됨.");
+        qrResult.textContent = 'QR 코드를 스캔 중...';
+
+        if (typeof jsQR !== 'undefined') {
+            requestAnimationFrame(tick);
+        } else {
+            console.warn('jsQR 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도합니다.');
+            setTimeout(() => requestAnimationFrame(tick), 500);
+        }
+
     } catch (err) {
-        // 카메라 시작 실패 시
-        qrResultDiv.textContent = `카메라를 시작할 수 없습니다. 권한을 확인해주세요. (오류: ${err.message || err})`;
-        console.error("QR 스캐너 시작 실패:", err);
-        qrVideo.classList.add('hidden'); // 비디오 요소를 숨겨 에러 메시지 강조
+        console.error('웹캠 접근 오류:', err);
+        qrResult.textContent = '웹캠을 시작할 수 없습니다. 카메라 권한을 확인해주세요.';
+        alert('웹캠 접근에 실패했습니다. 카메라 권한을 허용했는지 확인하고 새로고침해주세요.');
     }
 }
 
+// --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
+function tick() {
+    if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
 
-// 관리자 모드 활성화/비활성화 토글
-function toggleMasterMode() {
-    isMasterMode = !isMasterMode;
-    controlsDiv.innerHTML = ''; // 버튼 초기화
+        canvas.width = qrVideo.videoWidth;
+        canvas.height = qrVideo.videoHeight;
+        context.drawImage(qrVideo, 0, 0, canvas.width, canvas.height);
 
-    if (isMasterMode) {
-        // 모든 스탬프 채우기 버튼
-        const fillAllBtn = document.createElement('button');
-        fillAllBtn.textContent = '모든 스탬프 채우기';
-        fillAllBtn.addEventListener('click', () => {
-            const studentInfo = JSON.parse(localStorage.getItem('studentInfo'));
-            if (!studentInfo) {
-                alert('학생 정보가 없어 스탬프를 적용할 수 없습니다.');
-                return;
-            }
-            const stampsKey = `stamps_${studentInfo.grade}_${studentInfo.sClass}_${studentInfo.number}`;
-            const allStamps = Array.from({ length: TOTAL_CLASSES }, (_, i) => i + 1);
-            localStorage.setItem(stampsKey, JSON.stringify(allStamps));
-            loadStampState();
-            alert('모든 스탬프를 채웠습니다!');
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert', 
         });
-        controlsDiv.appendChild(fillAllBtn);
 
-        // 모든 스탬프 초기화 버튼
-        const clearAllBtn = document.createElement('button');
-        clearAllBtn.textContent = '모든 스탬프 초기화';
-        clearAllBtn.addEventListener('click', () => {
-            const studentInfo = JSON.parse(localStorage.getItem('studentInfo'));
-            if (confirm('모든 스탬프를 정말 초기화하시겠습니까?')) {
-                if (studentInfo) {
-                    const stampsKey = `stamps_${studentInfo.grade}_${studentInfo.sClass}_${studentInfo.number}`;
-                    localStorage.removeItem(stampsKey);
-                    loadStampState();
-                    alert('모든 스탬프가 초기화되었습니다.');
-                } else {
-                    alert('학생 정보가 없어 초기화할 스탬프가 없습니다.');
-                }
+        if (code) {
+            console.log('QR 코드 스캔 성공:', code.data);
+            qrResult.textContent = `스캔 성공: ${code.data}`;
+            
+            // --- 여기에서 관리자 QR 코드인지 먼저 확인 (비밀번호 확인 없이 바로 진입) ---
+            if (code.data === ADMIN_QR_CODE_DATA) {
+                isAdminMode = true;
+                alert('관리자 모드에 진입했습니다.');
+                showAdminControls(); // 관리자 컨트롤 표시
+            } else {
+                // 일반 QR 코드 스캔 로직 실행
+                processQRData(code.data);
             }
-        });
-        controlsDiv.appendChild(clearAllBtn);
+            
+            qrVideo.pause(); // QR 스캔 성공 시 잠시 멈춤
+            // 관리자 모드가 활성화되었으면 스캔을 재시작하지 않음
+            // 일반 QR코드 스캔 성공 시에만 일정 시간 후 재시작
+            if (!isAdminMode) {
+                setTimeout(() => {
+                    qrVideo.play();
+                    qrResult.textContent = 'QR 코드를 스캔 중...';
+                    requestAnimationFrame(tick);
+                }, 3000); // 3초 후 재스캔 시작
+            }
 
-        // 특정 스탬프 활성화/비활성화 버튼 (1번부터 20번까지)
-        for (let i = 1; i <= TOTAL_CLASSES; i++) {
-            const classBtn = document.createElement('button');
-            classBtn.classList.add('class-control-button');
-            classBtn.dataset.class = i;
-            classBtn.textContent = `${i}반 ${i == 10 ? '(마스터)' : ''}`; // 10반에 마스터 표시
-            classBtn.addEventListener('click', () => {
-                applyStamp(i); // 특정 스탬프 적용
-            });
-            controlsDiv.appendChild(classBtn);
+        } else {
+            // 관리자 모드가 아닐 때만 계속 스캔 시도
+            if (!isAdminMode) {
+                qrResult.textContent = 'QR 코드를 스캔 중...';
+                requestAnimationFrame(tick);
+            }
         }
-
-        // 마스터 모드 종료 버튼
-        const exitMasterBtn = document.createElement('button');
-        exitMasterBtn.textContent = '관리자/마스터 모드 종료';
-        exitMasterBtn.addEventListener('click', toggleMasterMode);
-        controlsDiv.appendChild(exitMasterBtn);
-
     } else {
-        // 일반 사용자 모드 버튼 (없음)
-        // 여기에 일반 사용자에게 보여줄 버튼이 있다면 추가
+        // 관리자 모드가 아닐 때만 계속 스캔 시도
+        if (!isAdminMode) {
+            requestAnimationFrame(tick);
+        }
     }
 }
 
+// --- 스캔된 QR 데이터 처리 함수 ---
+function processQRData(data) {
+    console.log("스캔된 원본 QR 데이터:", data);
 
-// 정보 제출 버튼 클릭 이벤트 리스너
-submitInfoBtn.addEventListener('click', () => {
-    const grade = inputGrade.value.trim();
-    const sClass = inputClass.value.trim();
-    const number = inputNumber.value.trim();
-    const name = inputName.value.trim();
-
-    if (!grade || !sClass || !number || !name) {
-        alert('모든 정보를 입력해주세요.');
+    if (!data.startsWith(VALID_QR_PREFIX)) {
+        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다.';
+        console.warn('유효하지 않은 QR 코드 스캔', data);
         return;
     }
 
-    const classNum = parseInt(sClass, 10);
-    const numberNum = parseInt(number, 10);
-    const gradeNum = parseInt(grade, 10);
+    let actualData = data.substring(VALID_QR_PREFIX.length);
 
-    if (isNaN(gradeNum) || gradeNum < 1 || gradeNum > 6) {
-        alert('학년은 1부터 6 사이의 숫자로 입력해주세요.');
+    if (VALID_SECRET_SUFFIX && !actualData.endsWith(VALID_SECRET_SUFFIX)) {
+        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (보안 키 불일치)';
+        console.warn('유효하지 않은 QR 코드 스캔: 보안 키 불일치', data);
         return;
     }
-    if (isNaN(classNum) || classNum < 1 || classNum > 10) {
-        alert('반은 1부터 10 사이의 숫자로 입력해주세요.');
-        return;
-    }
-    if (isNaN(numberNum) || numberNum < 1) {
-        alert('번호는 올바른 숫자로 입력해주세요.');
-        return;
-    }
-
-    const studentInfo = {
-        grade: grade,
-        sClass: sClass,
-        number: number,
-        name: name
-    };
-
-    localStorage.setItem('studentInfo', JSON.stringify(studentInfo));
-    alert('정보가 저장되었습니다. 스탬프 화면으로 이동합니다.');
-
-    showMainContentScreen(); // 메인 화면 표시
-    loadStampState();
-    startQrScanner(); // QR 스캐너 시작
-});
-
-// 동아리 위치 안내 버튼 클릭 이벤트
-showLocationGuideBtn.addEventListener('click', async () => {
-    console.log("동아리 위치 안내 버튼 클릭됨.");
-    // QR 스캔 중이라면 중지
-    if (html5QrCode && html5QrCode.isScanning) {
-        console.log("위치 안내 진입 전 QR 스캐너 중지 시도...");
-        try {
-            await html5QrCode.stop(); // clear() 대신 stop() 사용
-            console.log("QR 스캐너 중지 완료.");
-        } catch (err) {
-            console.warn("QR 스캐너 중지 중 오류 발생:", err);
-        }
-    } else {
-        console.log("QR 스캐너가 실행 중이 아님.");
+    if (VALID_SECRET_SUFFIX) {
+        actualData = actualData.substring(0, actualData.length - VALID_SECRET_SUFFIX.length);
     }
     
-    // 화면 전환
-    showLocationGuideScreen();
-});
+    console.log("처리할 실제 데이터:", actualData);
 
-// 위치 안내 페이지 나가기 버튼 클릭 이벤트
-closeLocationGuideBtn.addEventListener('click', () => {
-    console.log("위치 안내 페이지 나가기 버튼 클릭됨.");
-    showMainContentScreen(); // 메인 화면 다시 표시
+    const classNumberMatch = actualData.match(/(\d+)반/);
 
-    // QR 스캔 다시 시작 (충분한 지연 후)
-    console.log("위치 안내 종료 후 QR 스캐너 재시작 시도...");
-    // 브라우저가 카메라 리소스를 완전히 해제할 시간을 주기 위해 지연 추가
-    setTimeout(() => {
-        // html5QrCode 인스턴스가 존재하고, 현재 스캔 중이 아니라면 시작
-        if (html5QrCode && !html5QrCode.isScanning) {
-            startQrScanner();
-        } else if (!html5QrCode) { // 인스턴스가 아예 없는 경우 (첫 로드 시 발생 가능)
-            startQrScanner();
+    if (classNumberMatch && classNumberMatch[1]) {
+        const classNumber = parseInt(classNumberMatch[1]);
+
+        if (classNumber >= 1 && classNumber <= TOTAL_CLASSES) { // 총 반 개수 반영
+            const stampIndex = classNumber - 1; 
+
+            if (stampImages[stampIndex]) {
+                if (stampImages[stampIndex].classList.contains('hidden')) {
+                    stampImages[stampIndex].classList.remove('hidden');
+                    localStorage.setItem(`class${classNumber}_stamped`, 'true');
+                    qrResult.textContent = `✅ ${classNumber}반 스탬프가 찍혔습니다!`;
+                    console.log(`${classNumber}반 스탬프가 찍혔습니다.`);
+                } else {
+                    qrResult.textContent = `☑️ ${classNumber}반 스탬프는 이미 찍혔습니다.`;
+                    console.log(`${classNumber}반 스탬프는 이미 찍혔습니다.`);
+                }
+            } else {
+                qrResult.textContent = '스탬프 요소를 찾을 수 없습니다. (HTML 구조 확인)';
+            }
         } else {
-            console.log("QR 스캐너가 이미 실행 중이거나 초기화 중입니다. 재시작하지 않습니다.");
+            qrResult.textContent = `⛔ 유효하지 않은 반 정보입니다. (1~${TOTAL_CLASSES}반만 가능)`; // 메시지 수정
         }
-    }, 500); // 0.5초 지연
-});
-
-
-// 10반 스탬프 (마스터 키) 클릭 시 관리자 모드 토글
-document.getElementById('stamp-10').addEventListener('click', (event) => {
-    // Ctrl 또는 Cmd 키와 함께 10번 스탬프 클릭 시 마스터 모드 토글
-    if (event.ctrlKey || event.metaKey) {
-        event.preventDefault(); // 기본 이미지 클릭 동작 방지
-        toggleMasterMode();
+    } else {
+        qrResult.textContent = '❓ 알 수 없는 QR 코드 형식입니다. (예: "1반" 형식이어야 함)';
     }
+}
+
+// --- 모든 스탬프 초기화 함수 (이제 관리자 모드에서만 사용) ---
+function resetAllStamps() {
+    if (confirm('경고: 모든 스탬프를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        stampImages.forEach(stamp => {
+            stamp.classList.add('hidden');
+        });
+        for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
+            localStorage.removeItem(`class${i}_stamped`);
+        }
+        qrResult.textContent = '모든 스탬프가 초기화되었습니다.';
+        console.log('모든 스탬프 초기화 완료.');
+    }
+}
+
+// --- 페이지 로드 시 스탬프 상태 복원 함수 ---
+function loadStampState() {
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
+        if (localStorage.getItem(`class${i}_stamped`) === 'true') {
+            const stampIndex = i - 1;
+            if (stampImages[stampIndex]) {
+                stampImages[stampIndex].classList.remove('hidden');
+            }
+        }
+    }
+}
+
+// --- 관리자 모드 관련 함수들 ---
+
+// 관리자 컨트롤을 표시하는 함수 (QR 스캔으로 활성화 후 바로 표시)
+function showAdminControls() {
+    const controlsDiv = document.querySelector('.controls');
+    controlsDiv.innerHTML = ''; // 기존 버튼들 제거 (일반 모드에 버튼이 없으므로 비어있을 것)
+
+    // 각 반 스탬프 제어 버튼 (1반부터 TOTAL_CLASSES까지)
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { // 총 반 개수 반영
+        const classButton = document.createElement('button');
+        classButton.textContent = `${i}반 스탬프 제어`;
+        classButton.classList.add('class-control-button');
+        classButton.dataset.class = i;
+        classButton.addEventListener('click', handleClassStampControl);
+        controlsDiv.appendChild(classButton);
+    }
+    
+    // 관리자 모드 종료 버튼
+    const exitAdminButton = document.createElement('button');
+    exitAdminButton.textContent = '관리자 모드 종료';
+    exitAdminButton.addEventListener('click', exitAdminMode);
+    controlsDiv.appendChild(exitAdminButton);
+
+    qrResult.textContent = '관리자 모드: 원하는 반을 선택하세요.';
+    qrVideo.pause(); // 관리자 모드에서는 스캔 중지
+}
+
+// 마스터 권한일 때만 보이는 버튼을 표시하는 함수
+function showMasterControls() {
+    isMasterMode = true; // 마스터 모드 활성화
+    const controlsDiv = document.querySelector('.controls');
+    controlsDiv.innerHTML = ''; // 모든 반 제어 버튼 제거
+
+    qrResult.textContent = 'MASTER KEY 활성화: 모든 스탬프를 제어할 수 있습니다.';
+
+    // 모든 스탬프 채우기 버튼
+    const fillAllButton = document.createElement('button');
+    fillAllButton.textContent = '모든 스탬프 채우기';
+    fillAllButton.addEventListener('click', fillAllStamps);
+    controlsDiv.appendChild(fillAllButton);
+
+    // 모든 스탬프 초기화 버튼
+    const masterResetButton = document.createElement('button');
+    masterResetButton.textContent = '모든 스탬프 초기화';
+    masterResetButton.addEventListener('click', resetAllStamps);
+    controlsDiv.appendChild(masterResetButton);
+
+    // 마스터 모드 종료 버튼
+    const exitMasterButton = document.createElement('button');
+    exitMasterButton.textContent = '마스터 모드 종료';
+    exitMasterButton.addEventListener('click', exitAdminMode); // 관리자 모드 종료와 동일하게 처리
+    controlsDiv.appendChild(exitMasterButton);
+}
+
+
+// 각 반 스탬프 제어 함수 (마스터 키 로직 추가)
+function handleClassStampControl(event) {
+    const classNumber = event.target.dataset.class;
+    const password = prompt(`${classNumber}반 비밀번호를 입력하세요:`);
+
+    // 10반 버튼이고 입력된 비밀번호가 마스터 키와 일치하는 경우 (총 20반이 되어도 10반이 마스터 키 활성화)
+    if (classNumber === '10' && password === MASTER_KEY) {
+        showMasterControls(); // 마스터 컨트롤 화면으로 전환
+        return; // 함수 종료
+    }
+
+    // 일반 반 비밀번호 확인 또는 10반 비밀번호 확인
+    if (password === CLASS_PASSWORDS[classNumber]) {
+        const stampIndex = classNumber - 1;
+        const currentStamp = stampImages[stampIndex];
+
+        if (currentStamp) {
+            if (currentStamp.classList.contains('hidden')) {
+                // 스탬프 찍기
+                currentStamp.classList.remove('hidden');
+                localStorage.setItem(`class${classNumber}_stamped`, 'true');
+                qrResult.textContent = `✅ ${classNumber}반 스탬프가 관리자에 의해 찍혔습니다!`;
+                alert(`${classNumber}반 스탬프가 찍혔습니다.`);
+                console.log(`${classNumber}반 스탬프 관리자 찍기 완료.`);
+            } else {
+                // 스탬프 취소하기
+                if (confirm(`${classNumber}반 스탬프를 취소하시겠습니까?`)) {
+                    currentStamp.classList.add('hidden');
+                    localStorage.removeItem(`class${classNumber}_stamped`);
+                    qrResult.textContent = `❌ ${classNumber}반 스탬프가 관리자에 의해 취소되었습니다.`;
+                    alert(`${classNumber}반 스탬프가 취소되었습니다.`);
+                    console.log(`${classNumber}반 스탬프 관리자 취소 완료.`);
+                }
+            }
+        }
+    } else {
+        alert('비밀번호가 틀렸습니다.');
+    }
+}
+
+
+// 모든 스탬프를 채우는 함수 (마스터 키로만 실행 가능)
+function fillAllStamps() {
+    if (confirm('모든 스탬프를 채우시겠습니까?')) {
+        stampImages.forEach((stamp, index) => {
+            stamp.classList.remove('hidden');
+            localStorage.setItem(`class${index + 1}_stamped`, 'true');
+        });
+        qrResult.textContent = '모든 스탬프가 채워졌습니다.';
+        console.log('모든 스탬프 채우기 완료.');
+    }
+}
+
+// 관리자 모드 종료 함수 (마스터 모드에서도 사용)
+function exitAdminMode() {
+    isAdminMode = false;
+    isMasterMode = false; // 마스터 모드도 종료
+    
+    const controlsDiv = document.querySelector('.controls');
+    controlsDiv.innerHTML = ''; // 모든 관리자 버튼 제거
+    
+    // 일반 모드에서는 버튼이 없으므로, 아무것도 다시 추가할 필요가 없습니다.
+
+    loadStampState(); // 스탬프 상태 다시 로드 (UI 동기화)
+    qrResult.textContent = '관리자 모드를 종료했습니다. QR 코드를 스캔 중...';
+    console.log('관리자 모드 종료.');
+    qrVideo.play(); // 웹캠 스캔 다시 시작
+    requestAnimationFrame(tick); // 스캔 루프 다시 시작
+}
+
+
+// --- 이벤트 리스너 연결 ---
+window.addEventListener('load', () => {
+    loadStampState();
+    startWebcam();
 });
 
+// 기존 일반 사용자용 초기화 버튼 (resetButton) 관련 리스너는 HTML에서 버튼이 제거되었으므로 필요 없습니다.
 
-// 페이지 로드 시 학생 정보 확인 함수 호출
-checkStudentInfo();
+
+// --- jsQR 라이브러리 동적 로드 ---
+const script = document.createElement('script');
+script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js';
+script.onload = () => {
+    console.log('jsQR 라이브러리 로드 완료');
+};
+document.head.appendChild(script);
