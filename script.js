@@ -3,7 +3,14 @@
 // Firebase SDK는 index.html에서 이미 초기화되었으므로,
 // 여기서는 초기화된 'auth'와 'database' 전역 객체를 사용합니다.
 // (index.html에서 window.auth, window.database로 할당됨)
-// !!! 중요: window.database는 firebase/database 모듈의 getDatabase()로 얻은 객체여야 합니다.
+
+// 중요: Firebase Realtime Database의 모듈식 API 함수들을 직접 가져옵니다.
+// index.html에서 type="module"로 이 스크립트가 로드되므로 가능합니다.
+// 이 import 문이 없으면 'ref', 'get', 'set', 'update' 등의 함수를 인식하지 못합니다.
+import { ref, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+// 만약 auth를 사용한다면:
+// import { GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
 
 // 기존 Google Sheets API 관련 상수들은 이제 필요 없으므로 제거합니다.
 // const CLIENT_ID = "YOUR_CLIENT_ID";
@@ -34,6 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log("script.js에서 Firebase Auth 및 Database 객체 사용 가능.");
     // console.log("Firebase Database 인스턴스 확인:", database); // 디버깅용: database 객체 내용 확인
 
+
     // ====================================================================
     // Firebase Authentication (Google 로그인) 관련 함수
     // 이 앱에서는 학번/반/번호 입력 방식이므로, Google 로그인은 선택 사항입니다.
@@ -41,19 +49,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ====================================================================
 
     // Firebase Auth v9+ 스타일로 수정
-    // firebase.auth.GoogleAuthProvider() 대신에 getAuth()에서 가져온 Auth 인스턴스에 따라 달라짐
-    // 이 함수가 사용되려면 index.html에서 Auth 관련 모듈도 적절히 import 되어야 함.
-    // 현재 코드에서는 Auth를 사용하지 않는 것으로 보임 (주석 처리됨)
+    // 이 함수는 현재 앱 흐름에서 사용되지 않는 것으로 주석처리 되어있습니다.
     /*
     async function signInWithGoogle() {
-        // Firebase Auth v9+ 방식: import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-        // 그리고 auth는 getAuth()로 얻은 인스턴스여야 함.
-        // 현재는 window.auth를 사용하므로, window.auth가 어떻게 정의되었는지에 따라 달라짐.
-        // 이 부분은 현재 실행 흐름에서 사용되지 않으므로 일단 그대로 둡니다.
-        const provider = new firebase.auth.GoogleAuthProvider();
+        // 이 함수가 사용되려면 index.html에서 Auth 관련 모듈도 적절히 import 되어야 함.
+        // 그리고 이 스크립트 상단에 signInWithPopup, GoogleAuthProvider를 import 해야 함.
+        const provider = new GoogleAuthProvider(); // firebase.auth.GoogleAuthProvider() 대신
         try {
             console.log("Google 로그인 팝업 시도 중...");
-            await auth.signInWithPopup(provider);
+            await signInWithPopup(auth, provider); // auth.signInWithPopup() 대신
             console.log("Google 로그인 성공!");
             return true;
         } catch (error) {
@@ -66,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ====================================================================
     // Firebase Realtime Database 호출 함수들 (기존 Google Sheets API 대체)
-    // !!! 핵심 수정: ref() 함수 사용 방식 변경 !!!
+    // !!! 핵심 수정: ref() 함수 사용 방식 변경 및 get(), set(), update() 사용 !!!
     // ====================================================================
 
     // 학생 정보 가져오기 (기존 getStudentInfo 함수 대체)
@@ -106,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log("Firebase 스탬프 정보 로드 성공:", data);
                 return {
                     stampedClubs: data.stampedClubs || [],
-                    hasTenStamps: data.hasTenStamps || false, // Firebase에서 'O'/'X'로 저장했다면 여기에 변환 로직 필요
+                    hasTenStamps: data.hasTenStamps || false,
                     bestClubVote: data.bestClubVote || ""
                 };
             } else {
@@ -144,8 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log(`Firebase 스탬프 정보 저장/업데이트 시도 중: ${studentId}`);
             const dataToSave = {
                 stampedClubs: studentInfo.stampedClubs || [],
-                // 'hasTenStamps' 필드는 'O'/'X' 대신 boolean으로 관리하는 것이 더 좋습니다.
-                // Firebase Database에 'O'/'X'로 저장하고 싶다면 이 부분은 그대로 두세요.
                 hasTenStamps: studentInfo.stampedClubs.length >= 10 ? 'O' : 'X',
                 bestClubVote: studentInfo.bestClubVote || ""
             };
