@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 스플래시 화면 (학번/이름 입력) -->
     <div id="splash-screen" class="screen">
         <div class="splash-content">
             <h1>환영합니다!</h1>
@@ -22,7 +21,6 @@
         </div>
     </div>
 
-    <!-- 메인 콘텐츠 화면 (QR 스캐너 및 스탬프) -->
     <div id="main-content" class="screen hidden">
         <div class="header">
             <h2>스탬프 랠리</h2>
@@ -34,7 +32,6 @@
             <p id="qr-result">QR 코드를 스캔 중...</p>
         </div>
 
-        <!-- 스탬프 10개 이상 획득 시 메시지 및 투표 기능 -->
         <div id="ten-stamps-message" class="message-box hidden">
             <p>🎉 축하합니다! 스탬프 10개를 모두 모았습니다!</p>
             <p>최고의 동아리에 투표해주세요!</p>
@@ -44,110 +41,78 @@
         </div>
 
         <div class="stamps-grid">
-            <!-- JavaScript로 동적으로 스탬프 이미지를 생성할 수도 있지만,
-                 명시적으로 HTML에 20개 스탬프를 배치합니다. -->
-            <!-- 초기에는 모두 hidden 클래스를 가집니다. -->
-            <img src="./images/stamp_base.png" alt="1반 스탬프" class="stamp hidden" id="stamp-1">
-            <img src="./images/stamp_base.png" alt="2반 스탬프" class="stamp hidden" id="stamp-2">
-            <img src="./images/stamp_base.png" alt="3반 스탬프" class="stamp hidden" id="stamp-3">
-            <img src="./images/stamp_base.png" alt="4반 스탬프" class="stamp hidden" id="stamp-4">
-            <img src="./images/stamp_base.png" alt="5반 스탬프" class="stamp hidden" id="stamp-5">
-            <img src="./images/stamp_base.png" alt="6반 스탬프" class="stamp hidden" id="stamp-6">
-            <img src="./images/stamp_base.png" alt="7반 스탬프" class="stamp hidden" id="stamp-7">
-            <img src="./images/stamp_base.png" alt="8반 스탬프" class="stamp hidden" id="stamp-8">
-            <img src="./images/stamp_base.png" alt="9반 스탬프" class="stamp hidden" id="stamp-9">
-            <img src="./images/stamp_base.png" alt="10반 스탬프" class="stamp hidden" id="stamp-10">
-            <img src="./images/stamp_base.png" alt="11반 스탬프" class="stamp hidden" id="stamp-11">
-            <img src="./images/stamp_base.png" alt="12반 스탬프" class="stamp hidden" id="stamp-12">
-            <img src="./images/stamp_base.png" alt="13반 스탬프" class="stamp hidden" id="stamp-13">
-            <img src="./images/stamp_base.png" alt="14반 스탬프" class="stamp hidden" id="stamp-14">
-            <img src="./images/stamp_base.png" alt="15반 스탬프" class="stamp hidden" id="stamp-15">
-            <img src="./images/stamp_base.png" alt="16반 스탬프" class="stamp hidden" id="stamp-16">
-            <img src="./images/stamp_base.png" alt="17반 스탬프" class="stamp hidden" id="stamp-17">
-            <img src="./images/stamp_base.png" alt="18반 스탬프" class="stamp hidden" id="stamp-18">
-            <img src="./images/stamp_base.png" alt="19반 스탬프" class="stamp hidden" id="stamp-19">
-            <img src="./images/stamp_base.png" alt="20반 스탬프" class="stamp hidden" id="stamp-20">
+            <img src="./images/stamp_base.png" alt="바이오시너지 스탬프" class="stamp hidden" id="stamp-1">
+            <img src="./images/stamp_base.png" alt="네이처 스탬프" class="stamp hidden" id="stamp-2">
+            <img src="./images/stamp_base.png" alt="컴싸 스탬프" class="stamp hidden" id="stamp-3">
+            <img src="./images/stamp_base.png" alt="일취월장 스탬프" class="stamp hidden" id="stamp-4">
+            <img src="./images/stamp_base.png" alt="십시일반 스탬프" class="stamp hidden" id="stamp-5">
+            <img src="./images/stamp_base.png" alt="새길 스탬프" class="stamp hidden" id="stamp-6">
+            <img src="./images/stamp_base.png" alt="초아 스탬프" class="stamp hidden" id="stamp-7">
+            <img src="./images/stamp_base.png" alt="그린업 스탬프" class="stamp hidden" id="stamp-8">
+            <img src="./images/stamp_base.png" alt="아트리움 스탬프" class="stamp hidden" id="stamp-9">
+            <img src="./images/stamp_base.png" alt="언로커스 스탬프" class="stamp hidden" id="stamp-10">
+            <img src="./images/stamp_base.png" alt="공자 스탬프" class="stamp hidden" id="stamp-11">
+            <img src="./images/stamp_base.png" alt="로직 스탬프" class="stamp hidden" id="stamp-12">
+            <img src="./images/stamp_base.png" alt="사회과학융합탐구 스탬프" class="stamp hidden" id="stamp-13">
+            <img src="./images/stamp_base.png" alt="플라이 어웨이 스탬프" class="stamp hidden" id="stamp-14">
+            <img src="./images/stamp_base.png" alt="specialbooth 스탬프" class="stamp hidden" id="stamp-15">
         </div>
 
         <div class="controls">
-            <!-- 관리자 모드 활성화 시 버튼들이 동적으로 추가됩니다. -->
-        </div>
+            </div>
 
         <button id="showLocationGuideBtn">동아리 위치 안내</button>
     </div>
 
-    <!-- 동아리 위치 안내 화면 -->
     <div id="location-guide-screen" class="screen hidden">
         <h2>동아리 위치 안내</h2>
         <div class="club-list-container">
             <h3>동아리 목록 및 위치</h3>
             <ul>
-                <li><strong>정보보안 동아리 (Hackers_High):</strong> 1-1반</li>
-                <li><strong>방송부 (BSB):</strong> 1-2반</li>
-                <li><strong>과학 탐구 동아리 (Science Explorer):</strong> 1-3반</li>
-                <li><strong>수학 심화 동아리 (Mathmatics+):</strong> 1-4반</li>
-                <li><strong>미술 창작 동아리 (Art Flow):</strong> 1-5반</li>
-                <li><strong>음악 밴드 동아리 (Rhythm Makers):</strong> 1-6반</li>
-                <li><strong>사진 동아리 (Lens Eye):</strong> 1-7반</li>
-                <li><strong>독서 토론 동아리 (Book Worms):</strong> 1-8반</li>
-                <li><strong>환경 보호 동아리 (Eco Keepers):</strong> 1-9반</li>
-                <li><strong>요리 동아리 (Gourmet Club):</strong> 1-10반</li>
-                <li><strong>스포츠 동아리 (Active Youth):</strong> 2-1반</li>
-                <li><strong>코딩 동아리 (Code Breakers):</strong> 2-2반</li>
-                <li><strong>패션 디자인 동아리 (Style Creators):</strong> 2-3반</li>
-                <li><strong>연극 동아리 (Stage Dreamers):</strong> 2-4반</li>
-                <li><strong>영화 감상 동아리 (Cinephiles):</strong> 2-5반</li>
-                <li><strong>외국어 회화 동아리 (Global Talkers):</strong> 2-6반</li>
-                <li><strong>여행 계획 동아리 (Wanderlust):</strong> 2-7반</li>
-                <li><strong>보드게임 동아리 (Board Gamers):</strong> 2-8반</li>
-                <li><strong>만화 애니메이션 동아리 (AniManga):</strong> 2-9반</li>
-                <li><strong>봉사 동아리 (Helping Hands):</strong> 2-10반</li>
+                <li><strong>1. 바이오시너지:</strong> 1-1반</li>
+                <li><strong>2. 네이처:</strong> 1-2반</li>
+                <li><strong>3. 컴싸:</strong> 1-3반</li>
+                <li><strong>4. 일취월장:</strong> 1-4반</li>
+                <li><strong>5. 십시일반:</strong> 1-5반</li>
+                <li><strong>6. 새길:</strong> 1-6반</li>
+                <li><strong>7. 초아:</strong> 1-7반</li>
+                <li><strong>8. 그린업:</strong> 1-8반</li>
+                <li><strong>9. 아트리움:</strong> 1-9반</li>
+                <li><strong>10. 언로커스:</strong> 1-10반</li>
+                <li><strong>11. 공자:</strong> 2-1반</li>
+                <li><strong>12. 로직:</strong> 2-2반</li>
+                <li><strong>13. 사회과학융합탐구:</strong> 2-3반</li>
+                <li><strong>14. 플라이 어웨이:</strong> 2-4반</li>
+                <li><strong>15. specialbooth:</strong> 2-5반</li>
             </ul>
             <p>* 위 목록은 예시이며, 실제 동아리 및 위치는 변경될 수 있습니다.</p>
         </div>
         <button id="closeLocationGuideBtn">돌아가기</button>
     </div>
 
-    <!-- jsQR 라이브러리 (QR 스캔에 필요) -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js"></script>
     
-    <!-- Firebase SDK (모듈 방식) 시작 -->
     <script type="module">
-        // Firebase 앱 초기화에 필요한 함수 임포트
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        // Firebase Realtime Database 서비스 임포트
         import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        // Firebase Analytics는 현재 앱에서 사용하지 않으므로 제거하거나 주석 처리합니다.
-        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-
-        // 여러분이 제공해주신 Firebase 프로젝트 설정
+        
         const firebaseConfig = {
             apiKey: "AIzaSyC419ExHmhVeUgZZ8OczKs0-wxjRe9r98A",
             authDomain: "qr-presentation.firebaseapp.com",
             projectId: "qr-presentation",
-            databaseURL: "https://console.firebase.google.com/u/1/project/qr-presentation/database",
+            databaseURL: "https://qr-presentation-default-rtdb.firebaseio.com/", // <--- 이 줄을 추가하세요! (여러분의 실제 URL로)
             storageBucket: "qr-presentation.firebasestorage.app",
             messagingSenderId: "798088889839",
             appId: "1:798088889839:web:680bdd77ab61bb99a0e21a",
-            measurementId: "G-PV8FER69EM" // Analytics를 사용하지 않아도 설정은 유지 가능
+            measurementId: "G-PV8FER69EM" 
         };
 
-        // Firebase 앱 초기화
         const app = initializeApp(firebaseConfig);
-        
-        // Firebase Realtime Database 서비스 인스턴스 가져오기
-        // 이 인스턴스를 script.js에서 사용하기 위해 'window' 객체에 할당하여 전역으로 만듭니다.
         window.database = getDatabase(app); 
-
-        // Analytics는 현재 사용하지 않으므로 주석 처리합니다.
-        // const analytics = getAnalytics(app); 
 
         console.log("Firebase 앱 및 Realtime Database 초기화 완료.");
         console.log("Firebase Database 인스턴스:", window.database);
     </script>
-    <!-- Firebase SDK 끝 -->
-
-    <!-- 앱의 핵심 로직을 담을 스크립트 (모듈 방식으로 로드) -->
     <script type="module" src="script.js"></script>
 </body>
 </html>
