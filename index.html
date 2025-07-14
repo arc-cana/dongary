@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <!-- 스플래시 화면 (학번/이름 입력) -->
     <div id="splash-screen" class="screen">
         <div class="splash-content">
             <h1>환영합니다!</h1>
@@ -21,6 +22,7 @@
         </div>
     </div>
 
+    <!-- 메인 콘텐츠 화면 (QR 스캐너 및 스탬프) -->
     <div id="main-content" class="screen hidden">
         <div class="header">
             <h2>스탬프 랠리</h2>
@@ -32,6 +34,7 @@
             <p id="qr-result">QR 코드를 스캔 중...</p>
         </div>
 
+        <!-- 스탬프 10개 이상 획득 시 메시지 및 투표 기능 -->
         <div id="ten-stamps-message" class="message-box hidden">
             <p>🎉 축하합니다! 스탬프 10개를 모두 모았습니다!</p>
             <p>최고의 동아리에 투표해주세요!</p>
@@ -41,6 +44,9 @@
         </div>
 
         <div class="stamps-grid">
+            <!-- JavaScript로 동적으로 스탬프 이미지를 생성할 수도 있지만,
+                 명시적으로 HTML에 20개 스탬프를 배치합니다. -->
+            <!-- 초기에는 모두 hidden 클래스를 가집니다. -->
             <img src="./images/stamp_base.png" alt="1반 스탬프" class="stamp hidden" id="stamp-1">
             <img src="./images/stamp_base.png" alt="2반 스탬프" class="stamp hidden" id="stamp-2">
             <img src="./images/stamp_base.png" alt="3반 스탬프" class="stamp hidden" id="stamp-3">
@@ -64,11 +70,13 @@
         </div>
 
         <div class="controls">
-            </div>
+            <!-- 관리자 모드 활성화 시 버튼들이 동적으로 추가됩니다. -->
+        </div>
 
         <button id="showLocationGuideBtn">동아리 위치 안내</button>
     </div>
 
+    <!-- 동아리 위치 안내 화면 -->
     <div id="location-guide-screen" class="screen hidden">
         <h2>동아리 위치 안내</h2>
         <div class="club-list-container">
@@ -100,7 +108,46 @@
         <button id="closeLocationGuideBtn">돌아가기</button>
     </div>
 
+    <!-- jsQR 라이브러리 (QR 스캔에 필요) -->
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js"></script>
-    <script src="script.js"></script>
+    
+    <!-- Firebase SDK (모듈 방식) 시작 -->
+    <script type="module">
+        // Firebase 앱 초기화에 필요한 함수 임포트
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // Firebase Realtime Database 서비스 임포트
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        // Firebase Analytics는 현재 앱에서 사용하지 않으므로 제거하거나 주석 처리합니다.
+        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+        // 여러분이 제공해주신 Firebase 프로젝트 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyC419ExHmhVeUgZZ8OczKs0-wxjRe9r98A",
+            authDomain: "qr-presentation.firebaseapp.com",
+            projectId: "qr-presentation",
+            databaseURL: "https://console.firebase.google.com/u/1/project/qr-presentation/database",
+            storageBucket: "qr-presentation.firebasestorage.app",
+            messagingSenderId: "798088889839",
+            appId: "1:798088889839:web:680bdd77ab61bb99a0e21a",
+            measurementId: "G-PV8FER69EM" // Analytics를 사용하지 않아도 설정은 유지 가능
+        };
+
+        // Firebase 앱 초기화
+        const app = initializeApp(firebaseConfig);
+        
+        // Firebase Realtime Database 서비스 인스턴스 가져오기
+        // 이 인스턴스를 script.js에서 사용하기 위해 'window' 객체에 할당하여 전역으로 만듭니다.
+        window.database = getDatabase(app); 
+
+        // Analytics는 현재 사용하지 않으므로 주석 처리합니다.
+        // const analytics = getAnalytics(app); 
+
+        console.log("Firebase 앱 및 Realtime Database 초기화 완료.");
+        console.log("Firebase Database 인스턴스:", window.database);
+    </script>
+    <!-- Firebase SDK 끝 -->
+
+    <!-- 앱의 핵심 로직을 담을 스크립트 (모듈 방식으로 로드) -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>
