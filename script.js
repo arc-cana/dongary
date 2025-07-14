@@ -2,7 +2,7 @@
 
 // ====================================================================
 // !!! 중요: 이 부분을 여러분이 생성한 OAuth 클라이언트 ID로 변경하세요 !!!
-const CLIENT_ID = "795499292540-npdno6q3obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com";
+const CLIENT_ID = "795499292540-npdno6q7obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com";
 // 예시: "123456789012-abcdefg1234567890abcdefg1234567890.apps.googleusercontent.com";
 // ====================================================================
 
