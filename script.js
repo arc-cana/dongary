@@ -17,7 +17,7 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
+const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); // 오타 수정 완료
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -238,9 +238,9 @@ async function resetAllStamps() {
 
         try {
             await remove(ref(database, `stamps/${currentStudentId}`)); 
-            // 투표 데이터는 이제 clubVotes에 집계되므로 학생별 votes는 제거하지 않습니다.
-            // 대신 학생의 hasVoted 상태를 초기화합니다.
-            await update(ref(database, `students/${currentStudentId}`), { hasVoted: null, hasTenStamps: null }); // 투표 및 출석인정 상태 초기화
+            // 학생의 투표 데이터 및 10개 스탬프 달성 상태 초기화
+            await remove(ref(database, `votes/${currentStudentId}`)); // 개별 투표 기록 삭제
+            await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: null }); // 10개 스탬프 달성 상태 초기화
 
             stampImages.forEach(stamp => {
                 stamp.classList.add('hidden');
@@ -318,10 +318,13 @@ async function checkTenStamps() {
                 console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
             }
 
-            // 투표 여부 확인 (hasVoted 필드 사용)
-            if (studentData && studentData.hasVoted) {
-                bestClubVoteStatus.textContent = `✅ 이미 투표했습니다.`;
-                bestClubInput.value = ''; // 투표했으니 입력창 비우기
+            // 투표 여부 확인 (votes 노드 사용)
+            const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
+            const votedClub = voteSnapshot.val();
+
+            if (votedClub) {
+                bestClubVoteStatus.textContent = `✅ 이미 ${votedClub}에 투표했습니다.`;
+                bestClubInput.value = votedClub; 
                 bestClubInput.disabled = true;
                 submitBestClubBtn.disabled = true;
             } else {
@@ -361,11 +364,9 @@ submitBestClubBtn.addEventListener('click', async () => {
 
     if (clubName) {
         try {
-            const studentRef = ref(database, `students/${currentStudentId}`);
-            const studentSnapshot = await get(studentRef);
-            const studentData = studentSnapshot.val();
-
-            if (studentData && studentData.hasVoted) {
+            // 학생이 이미 투표했는지 votes 노드에서 확인
+            const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
+            if (voteSnapshot.exists()) {
                 alert('이미 투표하셨습니다. 투표는 한 번만 가능합니다.');
                 return;
             }
@@ -377,14 +378,14 @@ submitBestClubBtn.addEventListener('click', async () => {
             }
 
             if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
-                // 투표 수 증가 트랜잭션 (동시성 문제 방지)
+                // 개별 학생의 투표 기록 저장
+                await set(ref(database, `votes/${currentStudentId}`), clubName);
+                
+                // 동아리 총 투표 수 증가 트랜잭션
                 const clubVotesRef = ref(database, `clubVotes/${clubName}`);
                 await runTransaction(clubVotesRef, (currentVotes) => {
                     return (currentVotes || 0) + 1;
                 });
-
-                // 학생의 투표 여부 기록
-                await update(studentRef, { hasVoted: true });
 
                 alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
                 checkTenStamps(); // UI 업데이트를 위해 다시 호출 (투표 완료 메시지 및 버튼 비활성화)
@@ -542,24 +543,27 @@ function exitAdminMode() {
 
 // --- 이벤트 리스너 연결 ---
 submitInfoBtn.addEventListener('click', async () => {
-    const grade = gradeInput.value;
-    const classNum = classInput.value;
-    const number = numberInput.value;
+    // 학년, 반, 번호를 두 자리 숫자로 패딩합니다.
+    const grade = gradeInput.value.padStart(2, '0');
+    const classNum = classInput.value.padStart(2, '0');
+    const number = numberInput.value.padStart(2, '0');
     const name = nameInput.value.trim();
 
     if (grade && classNum && number && name) {
         const studentId = `${grade}-${classNum}-${number}`; 
 
         try {
-            // 학생 정보 저장 시 hasTenStamps와 hasVoted 필드도 초기화
+            // 학생 정보 저장 시 hasTenStamps와 votes 필드도 초기화
             await set(ref(database, `students/${studentId}`), {
                 grade: grade,
                 classNum: classNum,
                 number: number,
                 name: name,
-                hasTenStamps: null, // 초기화
-                hasVoted: null     // 초기화
+                hasTenStamps: null // 초기화
             });
+            // votes 노드도 초기화 (만약 이전에 데이터가 남아있을 경우)
+            await remove(ref(database, `votes/${studentId}`));
+
             localStorage.setItem('currentStudentId', studentId); 
             studentDisplay.textContent = `학번: ${grade}학년 ${classNum}반 ${number}번 | 이름: ${name}`;
             showScreen(mainContentScreen);
@@ -598,6 +602,7 @@ window.addEventListener('load', async () => {
             const snapshot = await get(ref(database, `students/${currentStudentId}`));
             const studentData = snapshot.val();
             if (studentData) {
+                // 저장된 학번이 이미 패딩된 형태라고 가정하고 표시합니다.
                 studentDisplay.textContent = `학번: ${studentData.grade}학년 ${studentData.classNum}반 ${studentData.number}번 | 이름: ${studentData.name}`;
                 showScreen(mainContentScreen);
             } else {
