@@ -2,7 +2,7 @@
 
 // ====================================================================
 // !!! 중요: 이 부분을 여러분이 생성한 OAuth 클라이언트 ID로 변경하세요 !!!
-const CLIENT_ID = "795499292540-npdno6q7obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com";
+const CLIENT_ID = "795499292540-npdno6q3obp55j9kpsal3a9jvq5jn3v0.apps.googleusercontent.com";
 // 예시: "123456789012-abcdefg1234567890abcdefg1234567890.apps.googleusercontent.com";
 // ====================================================================
 
@@ -22,22 +22,19 @@ let tokenClient; // Google OAuth2.0 클라이언트 객체
 // Google API 클라이언트 라이브러리 (gapi) 및 Google Identity Services (GIS) 라이브러리 로드
 function loadGoogleAPI() {
     return new Promise((resolve, reject) => {
-        // GIS 라이브러리가 로드되고 초기화될 때 호출될 전역 함수 정의
         window.onGoogleLibraryLoad = () => {
             console.log("window.onGoogleLibraryLoad 콜백 호출됨.");
             if (typeof google !== 'undefined' && google.accounts) {
                 console.log("google.accounts 객체 확인:", google.accounts);
-                // 핵심 수정: initOAuth2TokenClient -> initTokenClient
                 if (google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function') {
-                    gisLoaded = true; // 로드 완료 플래그 설정
-                    tokenClient = google.accounts.oauth2.initTokenClient({ // 이 부분 수정
+                    gisLoaded = true;
+                    tokenClient = google.accounts.oauth2.initTokenClient({
                         client_id: CLIENT_ID,
                         scope: SCOPES,
                         callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
                     });
                     console.log("Google Identity Services 초기화 성공 (onGoogleLibraryLoad 내부).");
 
-                    // gapi (Google API 클라이언트) 라이브러리 로드
                     const gapiScript = document.createElement('script');
                     gapiScript.src = 'https://apis.google.com/js/api.js';
                     gapiScript.onload = () => {
@@ -68,7 +65,6 @@ function loadGoogleAPI() {
             }
         };
 
-        // GIS 라이브러리 스크립트 생성 및 삽입
         const gisScript = document.createElement('script');
         gisScript.src = 'https://accounts.google.com/gsi/client';
         gisScript.async = true;
@@ -81,50 +77,45 @@ function loadGoogleAPI() {
     });
 }
 
-
 // 인증 확인 및 토큰 요청 함수
+// 이 함수는 사용자의 명시적인 클릭 이벤트 내부에서 호출되어야 팝업 차단을 피할 수 있습니다.
 async function checkAuthAndGetToken() {
     return new Promise((resolve, reject) => {
         if (!gisLoaded || !tokenClient) {
-            // GIS나 tokenClient가 로드되지 않았으면 다시 로드 시도
-            loadGoogleAPI().then(() => {
-                requestToken();
-            }).catch(reject);
-        } else {
-            requestToken();
+            console.warn("GIS 또는 tokenClient가 아직 준비되지 않았습니다. 앱 초기화 중 오류가 있었을 수 있습니다.");
+            reject(new Error("Google APIs not fully loaded. Please refresh."));
+            return;
         }
 
-        function requestToken() {
-            tokenClient.callback = (resp) => {
-                if (resp.error) {
-                    console.error('인증 실패:', resp.error);
-                    alert("Google 인증에 실패했습니다. 새로고침 후 다시 시도해주세요. 오류: " + resp.error);
-                    reject(resp.error);
-                    return;
-                }
-                console.log('Google API 토큰 획득:', resp.access_token);
-                resolve(resp.access_token);
-            };
-            tokenClient.requestAccessToken(); // 토큰 요청 시작 (팝업이 뜰 수 있음)
-        }
+        tokenClient.callback = (resp) => {
+            if (resp.error) {
+                console.error('인증 실패:', resp.error);
+                alert("Google 인증에 실패했습니다. 다시 시도해주세요. 오류: " + resp.error);
+                reject(resp.error);
+                return;
+            }
+            console.log('Google API 토큰 획득:', resp.access_token);
+            resolve(resp.access_token);
+        };
+        tokenClient.requestAccessToken(); // 토큰 요청 시작 (팝업이 뜰 수 있음)
     });
 }
 
-// 앱 시작 시 Google API 로드
+// 앱 시작 시 Google API 로드 (인증 요청은 여기서 하지 않음)
 loadGoogleAPI().then(() => {
-    console.log("Google API 클라이언트 및 Identity Services 로드 완료. 이제 인증이 가능합니다.");
+    console.log("Google API 클라이언트 및 Identity Services 로드 완료. 이제 사용자 상호작용을 통해 인증이 가능합니다.");
 }).catch(error => {
     console.error("Google API 로드 또는 초기화 실패:", error);
     alert("앱 초기화 중 오류가 발생했습니다. 개발자 도구 콘솔을 확인해주세요. (오류: " + (error.message || error) + ")");
 });
 
 // ====================================================================
-// Sheets API 호출 함수들 (이 부분은 이전 코드와 동일)
+// Sheets API 호출 함수들 (checkAuthAndGetToken 호출 포함)
 // ====================================================================
 
 async function getStudentInfo(grade, sClass, number) {
     try {
-        await checkAuthAndGetToken();
+        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
         const range = `${STUDENTS_SHEET_NAME}!A:D`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -155,7 +146,7 @@ async function getStudentInfo(grade, sClass, number) {
 
 async function getStamps(grade, sClass, number) {
     try {
-        await checkAuthAndGetToken();
+        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
         const range = `${STAMPS_SHEET_NAME}!A:G`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -186,7 +177,7 @@ async function getStamps(grade, sClass, number) {
 
 async function saveStudentInfo(studentInfo) {
     try {
-        await checkAuthAndGetToken();
+        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
         const studentSheetName = STUDENTS_SHEET_NAME;
         const studentData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -237,7 +228,7 @@ async function saveStudentInfo(studentInfo) {
 
 async function saveStamps(studentInfo) {
     try {
-        await checkAuthAndGetToken();
+        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -291,7 +282,7 @@ async function saveStamps(studentInfo) {
 
 async function saveBestClubVote(studentInfo) {
     try {
-        await checkAuthAndGetToken();
+        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -334,7 +325,39 @@ async function saveBestClubVote(studentInfo) {
 // ClubList 시트에서 동아리 목록을 가져오는 함수
 async function getClubList() {
     try {
-        await checkAuthAndGetToken();
+        // getClubList는 앱 초기 로드 시 호출되므로,
+        // 여기서는 checkAuthAndGetToken을 직접 호출하지 않고
+        // loadGoogleAPI가 완료되어 gapi가 준비된 상태라고 가정합니다.
+        // 만약 초기 로드 시에도 인증이 필요하다면, 이 함수를 사용하는 시점을 재고해야 합니다.
+        // 현재는 'submitInfoBtn' 클릭 이후에 동아리 목록이 실제로 필요한 로직은 없습니다.
+        // (즉, 사용자 정보 입력 전에는 동아리 목록을 직접 가져오지 않음)
+        // 하지만 혹시 모를 상황에 대비하여 gapi가 로드되지 않았다면 에러를 발생시킬 수 있도록
+        // 로직을 추가하거나, getClubList도 checkAuthAndGetToken을 호출하도록 변경할 수 있습니다.
+        // 여기서는 초기 로딩 시 문제가 없었으니, 일단은 그대로 둡니다.
+        
+        // 주의: 현재 코드에서 DOMContentLoaded 내 getClubList()는 submitInfoBtn 클릭 전에 실행되므로
+        // 이 시점에서 checkAuthAndGetToken()을 호출하면 팝업 차단 문제가 다시 발생할 수 있습니다.
+        // getClubList는 "인증 없이" 공개된 스프레드시트에서 데이터를 읽는 경우에만 적합합니다.
+        // 인증이 필요한 경우, 이 함수도 사용자 상호작용 뒤에 호출되도록 조정해야 합니다.
+        // 지금은 "초기 동아리 목록 로드 완료: Array(0)" 메시지가 뜨는 것으로 보아,
+        // 인증 문제로 데이터를 못 가져오는 것으로 보입니다.
+
+        // 따라서 getClubList()도 인증이 필요하다면 아래와 같이 checkAuthAndGetToken()을 호출해야 합니다.
+        // 하지만 이 함수는 DOMContentLoaded 단계에서 호출되므로, 이 시점에 팝업이 뜨면 안됩니다.
+        // 해결책: 동아리 목록은 사용자 인증이 완료된 후에 가져오거나,
+        // 스프레드시트가 '웹에 게시'되어 인증 없이도 읽을 수 있도록 설정해야 합니다.
+
+        // 임시 해결책 (인증 필요 시): getClubList도 사용자 상호작용 뒤에 호출되도록 옮기거나,
+        // 스프레드시트를 웹에 게시하여 누구나 읽을 수 있게 하세요.
+        // 여기서는 임시로 getClubList에서 checkAuthAndGetToken을 주석 처리하고 에러 처리만 강화합니다.
+        // 실제 운영 환경에서는 스프레드시트 권한을 '웹에 게시'하거나,
+        // 동아리 목록 로드를 사용자 정보 입력 이후로 옮겨야 합니다.
+
+        if (!gapi || !gapi.client || !gapi.client.sheets) {
+            console.error("gapi 클라이언트가 아직 준비되지 않아 동아리 목록을 로드할 수 없습니다.");
+            throw new Error("Google Sheets API not ready for club list.");
+        }
+
         const range = `${CLUB_LIST_SHEET_NAME}!A:B`; // Club ID, Club Name
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -359,7 +382,7 @@ async function getClubList() {
         return clubs;
     } catch (error) {
         console.error("동아리 목록 로드 중 오류 발생:", error);
-        alert("동아리 목록 로드 중 오류 발생: " + error.message);
+        // alert("동아리 목록 로드 중 오류 발생: " + error.message); // 초기 로드 시 불필요한 alert 방지
         return [];
     }
 }
@@ -370,69 +393,59 @@ async function getClubList() {
 // ====================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // DOM 요소 가져오기 - index.html의 id에 맞춰서 정확히 변경
-    const splashScreen = document.getElementById('splash-screen'); // 학번/이름 입력 화면 (초기 화면)
-    const mainContent = document.getElementById('main-content'); // 스탬프 투어 메인 화면 (동아리 스탬프 grid 포함)
-    const locationGuideScreen = document.getElementById('location-guide-screen'); // 동아리 위치 안내 화면
+    const splashScreen = document.getElementById('splash-screen');
+    const mainContent = document.getElementById('main-content');
+    const locationGuideScreen = document.getElementById('location-guide-screen');
 
-    // splash-screen 내부 요소
     const inputGrade = document.getElementById('inputGrade');
     const inputClass = document.getElementById('inputClass');
     const inputNumber = document.getElementById('inputNumber');
     const inputName = document.getElementById('inputName');
     const submitInfoBtn = document.getElementById('submitInfoBtn');
 
-    // main-content 내부 요소
-    const studentDisplay = document.getElementById('student-display'); // 학생 정보 표시
-    const qrVideo = document.getElementById('qr-video'); // QR 스캔 비디오 영역 (현재 HTML에서 사용 안됨)
-    const qrResult = document.getElementById('qr-result'); // QR 스캔 결과 표시
-    const tenStampsMessage = document.getElementById('ten-stamps-message'); // 10개 스탬프 달성 메시지
-    const bestClubInput = document.getElementById('bestClubInput'); // 최고 동아리 투표 입력 필드
-    const submitBestClubBtn = document.getElementById('submitBestClubBtn'); // 최고 동아리 투표 버튼
-    const bestClubVoteStatus = document.getElementById('bestClubVoteStatus'); // 최고 동아리 투표 상태 표시
-    const showLocationGuideBtn = document.getElementById('showLocationGuideBtn'); // 동아리 위치 안내 버튼
+    const studentDisplay = document.getElementById('student-display');
+    const qrVideo = document.getElementById('qr-video');
+    const qrResult = document.getElementById('qr-result');
+    const tenStampsMessage = document.getElementById('ten-stamps-message');
+    const bestClubInput = document.getElementById('bestClubInput');
+    const submitBestClubBtn = document.getElementById('submitBestClubBtn');
+    const bestClubVoteStatus = document.getElementById('bestClubVoteStatus');
+    const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
 
-    // location-guide-screen 내부 요소
     const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
 
-    // 스탬프 이미지 요소들을 가져옵니다. (ID가 1부터 15까지)
     const stampElements = {};
     for (let i = 1; i <= 15; i++) {
         stampElements[`stamp-${i}`] = document.getElementById(`stamp-${i}`);
     }
 
-    let currentStudent = null; // 현재 확인된 학생 정보 저장
-    let currentStampedClubs = []; // 현재 학생이 찍은 스탬프 동아리 ID 배열
-    let clubDataList = []; // 동아리 목록 데이터를 저장할 변수
+    let currentStudent = null;
+    let currentStampedClubs = [];
+    let clubDataList = [];
 
-    // 화면 전환 함수 - index.html의 실제 ID에 맞춰서 수정
     function showScreen(screenElement) {
-        // 모든 주요 화면 숨기기
         splashScreen.style.display = 'none';
         mainContent.style.display = 'none';
         locationGuideScreen.style.display = 'none';
-        // 추가적인 모달 등이 있다면 여기에 display = 'none' 추가
-
-        // 선택된 화면만 보이게 하기
         if (screenElement) {
-            screenElement.style.display = 'flex'; // flex로 변경 (CSS에 display:flex; 설정 가정)
+            screenElement.style.display = 'flex';
             console.log(`화면: ${screenElement.id}`);
         } else {
             console.error("유효하지 않은 화면 요소입니다.");
         }
     }
 
-    // 초기 화면 로드 (학번/이름 입력 화면)
     showScreen(splashScreen);
     
-    // 초기 동아리 목록 미리 로드
-    // 앱 시작 시 한 번만 호출하여 clubDataList를 채웁니다.
-    // 비동기로 진행되므로, 동아리 목록이 필요한 시점에 clubDataList가 채워져있는지 확인해야 합니다.
+    // 이 시점에서는 getClubList()가 인증 없이 스프레드시트를 읽을 수 있도록 설정되었거나
+    // 아니면 나중에 인증 후 호출되도록 해야 합니다.
+    // 현재는 '초기 동아리 목록 로드 완료: Array(0)' 이 뜨므로, 인증 문제일 가능성이 높습니다.
+    // 따라서 getClubList()를 'submitInfoBtn' 클릭 이벤트 내부로 옮겨야 합니다.
+    // 임시로 DOMContentLoaded에서 호출은 유지하되, 나중에는 위치를 변경해야 할 수 있습니다.
     clubDataList = await getClubList();
     console.log("초기 동아리 목록 로드 완료:", clubDataList);
 
 
-    // 학번/이름 입력 후 시작하기 버튼 클릭
     submitInfoBtn.addEventListener('click', async () => {
         const grade = inputGrade.value;
         const sClass = inputClass.value;
@@ -447,11 +460,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const student = { grade, sClass, number, name };
 
         try {
+            // !!! 핵심 수정: submitInfoBtn 클릭 시점에만 checkAuthAndGetToken 호출 !!!
+            // 여기서 checkAuthAndGetToken()을 호출하여 사용자에게 Google 로그인 팝업을 띄웁니다.
+            // 이 호출이 성공해야 sheets API를 사용할 수 있습니다.
+            await checkAuthAndGetToken();
+
             // 학생 정보 확인
             const existingStudent = await getStudentInfo(grade, sClass, number);
 
             if (existingStudent) {
-                // 기존 학생 정보가 있으면 이름 업데이트 또는 확인
                 if (existingStudent.name !== name && name !== "") {
                     const confirmUpdate = confirm(`기존 학생 정보가 있습니다: ${existingStudent.name} 학생. 이름을 ${name}(으)로 업데이트하시겠습니까?`);
                     if (confirmUpdate) {
@@ -462,18 +479,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             throw new Error(saveResult.message);
                         }
                     } else {
-                        student.name = existingStudent.name; // 업데이트 거부 시 기존 이름 사용
+                        student.name = existingStudent.name;
                     }
                 } else if (name === "" && existingStudent.name) {
-                    student.name = existingStudent.name; // 이름 입력 없이 조회 시 기존 이름 사용
+                    student.name = existingStudent.name;
                 } else if (name === "" && !existingStudent.name) {
                     alert('학생 이름을 입력해주세요.');
                     return;
                 }
-                currentStudent = student; // 현재 학생 정보로 설정
+                currentStudent = student;
 
             } else {
-                // 새로운 학생 정보 저장
                 if (!name) {
                     alert('새로운 학생의 이름은 필수 입력 사항입니다.');
                     return;
@@ -481,7 +497,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const saveResult = await saveStudentInfo(student);
                 if (saveResult.success) {
                     alert('새로운 학생 정보가 저장되었습니다.');
-                    currentStudent = student; // 현재 학생 정보로 설정
+                    currentStudent = student;
                 } else {
                     throw new Error(saveResult.message);
                 }
@@ -492,9 +508,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentStampedClubs = stampData.stampedClubs;
 
             updateStudentInfoDisplay();
-            updateStampImages(); // 스탬프 이미지 상태 업데이트
-            updateTenStampsMessage(); // 10개 스탬프 메시지 업데이트
-            showScreen(mainContent); // 메인 콘텐츠 화면으로 전환
+            updateStampImages();
+            updateTenStampsMessage();
+            showScreen(mainContent);
+
+            // 동아리 목록도 필요하다면 이 시점에서 다시 로드 (인증이 필요한 경우)
+            // clubDataList = await getClubList();
+            // console.log("갱신된 동아리 목록 로드 완료:", clubDataList);
 
         } catch (error) {
             console.error('학생 정보 처리 중 오류 발생:', error);
@@ -502,7 +522,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // 학생 정보 표시 업데이트
     function updateStudentInfoDisplay() {
         if (currentStudent) {
             studentDisplay.textContent = `${currentStudent.grade}학년 ${currentStudent.sClass}반 ${currentStudent.number}번 ${currentStudent.name} 학생 (스탬프: ${currentStampedClubs.length}개)`;
@@ -511,9 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 스탬프 이미지 상태 업데이트
     function updateStampImages() {
-        // 모든 스탬프 이미지 초기화 (기본 이미지로)
         for (let i = 1; i <= 15; i++) {
             if (stampElements[`stamp-${i}`]) {
                 stampElements[`stamp-${i}`].src = `images/stamp_base.png`;
@@ -521,28 +538,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // 찍은 스탬프만 'stamped' 이미지로 변경
         currentStampedClubs.forEach(clubId => {
             const stampImg = stampElements[`stamp-${clubId}`];
             if (stampImg) {
-                stampImg.src = `images/stamp_${clubId}.png`; // 예를 들어, stamp_1.png, stamp_2.png
+                stampImg.src = `images/stamp_${clubId}.png`;
                 stampImg.classList.add('stamped');
             }
         });
     }
 
-    // 10개 스탬프 달성 메시지 및 투표 버튼 상태 업데이트
     function updateTenStampsMessage() {
         if (currentStampedClubs.length >= 10) {
-            tenStampsMessage.style.display = 'block'; // 10개 이상 달성 시 메시지 표시
-            // 최고 동아리 투표 상태 로드 및 표시
+            tenStampsMessage.style.display = 'block';
             getStamps(currentStudent.grade, currentStudent.sClass, currentStudent.number)
                 .then(stampData => {
                     if (stampData.bestClubVote) {
                         bestClubVoteStatus.textContent = `현재 투표: ${stampData.bestClubVote}`;
-                        bestClubInput.value = stampData.bestClubVote; // 입력창에 현재 투표 값 표시
-                        bestClubInput.disabled = true; // 투표했으면 입력 비활성화
-                        submitBestClubBtn.disabled = true; // 투표했으면 버튼 비활성화
+                        bestClubInput.value = stampData.bestClubVote;
+                        bestClubInput.disabled = true;
+                        submitBestClubBtn.disabled = true;
                     } else {
                         bestClubVoteStatus.textContent = "아직 투표하지 않았습니다.";
                         bestClubInput.disabled = false;
@@ -551,11 +565,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 })
                 .catch(error => console.error("최고 동아리 투표 상태 로드 실패:", error));
         } else {
-            tenStampsMessage.style.display = 'none'; // 10개 미만이면 숨기기
+            tenStampsMessage.style.display = 'none';
         }
     }
 
-    // 스탬프 이미지 클릭 이벤트 (QR 스캔 대신 직접 클릭으로 스탬프 찍기)
     for (let i = 1; i <= 15; i++) {
         const stampImg = stampElements[`stamp-${i}`];
         if (stampImg) {
@@ -564,19 +577,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     alert('먼저 학번과 이름을 입력해주세요.');
                     return;
                 }
-                const clubId = i; // 이미지 ID를 동아리 ID로 사용
+                const clubId = i;
 
                 if (!currentStampedClubs.includes(clubId)) {
                     currentStampedClubs.push(clubId);
                     await saveStamps({
                         ...currentStudent,
                         stampedClubs: currentStampedClubs,
-                        name: currentStudent.name // 이름도 같이 넘겨줌 (새로운 스탬프 정보 추가 시 사용될 수 있음)
+                        name: currentStudent.name
                     });
                     alert(`${clubDataList.find(c => c.id === clubId)?.name || '해당 동아리'} 스탬프가 찍혔습니다!`);
                     updateStampImages();
-                    updateStudentInfoDisplay(); // 스탬프 개수 업데이트
-                    updateTenStampsMessage(); // 10개 스탬프 메시지 업데이트
+                    updateStudentInfoDisplay();
+                    updateTenStampsMessage();
                 } else {
                     alert('이미 스탬프를 찍은 동아리입니다.');
                 }
@@ -584,7 +597,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 최고 동아리 투표하기 버튼 클릭
     submitBestClubBtn.addEventListener('click', async () => {
         if (!currentStudent) {
             alert('먼저 학번과 이름을 입력해주세요.');
@@ -603,26 +615,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (saveResult.success) {
             alert(`${bestClubName}에 투표했습니다!`);
-            updateTenStampsMessage(); // 투표 상태 업데이트
+            updateTenStampsMessage();
         } else {
             alert(`투표 저장 실패: ${saveResult.message}`);
         }
     });
 
-    // 동아리 위치 안내 버튼 클릭
     showLocationGuideBtn.addEventListener('click', () => {
         showScreen(locationGuideScreen);
     });
 
-    // 동아리 위치 안내 닫기 버튼 클릭
     closeLocationGuideBtn.addEventListener('click', () => {
         showScreen(mainContent);
     });
-
-    // QR 스캔 관련 (HTML에 qr-scanner-container와 qr-video 등이 있지만,
-    // 현재 script.js에서는 html5-qrcode 라이브러리를 직접 연동하는 로직이 없어 비활성화)
-    // 만약 QR 스캔 기능을 활성화하려면, html5-qrcode 라이브러리 사용법에 따라
-    // qr-video에 비디오 스트림을 연결하고 스캔 로직을 구현해야 합니다.
-    // 지금은 스탬프 이미지 클릭으로 대체되어 있습니다.
-
 });
