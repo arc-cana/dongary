@@ -5,6 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2025 동아리 발표회 스탬프 투어</title>
     <link rel="stylesheet" href="style.css">
+
+    <!-- Firebase SDK (모듈 방식) 시작 -->
+    <!-- Firebase 앱 초기화 및 필요한 서비스 SDK 임포트 -->
+    <script type="module">
+        // Firebase 앱 초기화에 필요한 함수 임포트
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // Firebase 인증 (Authentication) 서비스 임포트
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        // Firebase 실시간 데이터베이스 (Realtime Database) 서비스 임포트
+        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        // Firebase 애널리틱스 (Analytics) 서비스 임포트 (선택 사항, 필요 없으면 삭제 가능)
+        // import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+
+        // 여러분의 Firebase 프로젝트 설정
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1x-22pASLY_maB2wjPJ82OSJ7gjrsf9M",
+            authDomain: "qr-project-a1bb8.firebaseapp.com",
+            projectId: "qr-project-a1bb8",
+            storageBucket: "qr-project-a1bb8.firebasestorage.app",
+            messagingSenderId: "837502158820",
+            appId: "1:837502158820:web:016f69b55af886f17a29f1",
+            measurementId: "G-51TLNHFHHK"
+        };
+
+        // Firebase 앱 초기화
+        const app = initializeApp(firebaseConfig);
+        
+        // Firebase 서비스 인스턴스 가져오기
+        // 이 변수들을 script.js에서 사용하려면 'window' 객체에 할당하여 전역으로 만듭니다.
+        window.auth = getAuth(app); // Firebase 인증 서비스 인스턴스
+        window.database = getDatabase(app); // Firebase Realtime Database 서비스 인스턴스
+
+        // 애널리틱스 초기화 (선택 사항)
+        // window.analytics = getAnalytics(app); 
+
+        console.log("Firebase 앱 및 서비스 초기화 완료.");
+        console.log("Firebase Auth 인스턴스:", window.auth);
+        console.log("Firebase Realtime Database 인스턴스:", window.database);
+    </script>
+    <!-- Firebase SDK 끝 -->
 </head>
 <body>
 
@@ -26,10 +66,12 @@
     <div id="main-content" class="screen hidden">
         <div class="header">
             <h2>2025 동아리 발표회</h2>
-            <div id="student-display"></div> </div>
+            <div id="student-display"></div>
+        </div>
 
         <div class="qr-scanner-container">
-            <div id="qr-video"></div> <div id="qr-result">QR 코드를 스캔 중...</div>
+            <div id="qr-video"></div>
+            <div id="qr-result">QR 코드를 스캔 중...</div>
         </div>
 
         <div id="ten-stamps-message" class="hidden message-box">
@@ -37,7 +79,8 @@
             <p>가장 잘했다고 생각하는 동아리를 투표해주세요.</p>
             <input type="text" id="bestClubInput" placeholder="동아리 이름 입력">
             <button id="submitBestClubBtn">투표하기</button>
-            <p id="bestClubVoteStatus"></p> </div>
+            <p id="bestClubVoteStatus"></p>
+        </div>
 
         <div class="stamps-grid">
             <img src="images/stamp_base.png" alt="바이오시너지" class="stamp" id="stamp-1">
@@ -58,7 +101,7 @@
         </div>
 
         <div class="controls">
-            </div>
+        </div>
         <button id="showLocationGuideBtn">동아리 위치 안내</button>
     </div>
 
@@ -83,13 +126,14 @@
                 <li>14. 플라이어웨이 (강당)</li>
                 <li>15. special booth (다목적실 A, B)</li>
             </ul>
-            <p>※ 부스 운영에 참여하지 않는 **체력단련반, 인생책방 I, 인생책방 II 동아리**에게는 스탬프를 받을 수 없습니다.</p>
-            <p>※ 3학년 모든 학생은 **special booth**에 반드시 참여해야 합니다.</p>
+            <p>※ 부스 운영에 참여하지 않는 <b>체력단련반, 인생책방 I, 인생책방 II 동아리</b>에게는 스탬프를 받을 수 없습니다.</p>
+            <p>※ 3학년 모든 학생은 <b>special booth</b>에 반드시 참여해야 합니다.</p>
             <p>※ 자세한 내용은 발표회 준비위원의 안내를 따라주세요.</p>
         </div>
         <button id="closeLocationGuideBtn">뒤로 가기</button>
     </div>
 
+    <!-- html5-qrcode.min.js와 script.js는 Firebase SDK 초기화 다음에 와야 합니다. -->
     <script src="html5-qrcode.min.js"></script>
     <script src="script.js"></script>
 </body>
