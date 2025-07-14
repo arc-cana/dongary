@@ -78,7 +78,6 @@ function loadGoogleAPI() {
 }
 
 // 인증 확인 및 토큰 요청 함수
-// 이 함수는 사용자의 명시적인 클릭 이벤트 내부에서 호출되어야 팝업 차단을 피할 수 있습니다.
 async function checkAuthAndGetToken() {
     return new Promise((resolve, reject) => {
         if (!gisLoaded || !tokenClient) {
@@ -97,7 +96,7 @@ async function checkAuthAndGetToken() {
             console.log('Google API 토큰 획득:', resp.access_token);
             resolve(resp.access_token);
         };
-        tokenClient.requestAccessToken(); // 토큰 요청 시작 (팝업이 뜰 수 있음)
+        tokenClient.requestAccessToken();
     });
 }
 
@@ -110,12 +109,12 @@ loadGoogleAPI().then(() => {
 });
 
 // ====================================================================
-// Sheets API 호출 함수들 (checkAuthAndGetToken 호출 포함)
+// Sheets API 호출 함수들
 // ====================================================================
 
 async function getStudentInfo(grade, sClass, number) {
     try {
-        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
+        await checkAuthAndGetToken();
         const range = `${STUDENTS_SHEET_NAME}!A:D`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -146,7 +145,7 @@ async function getStudentInfo(grade, sClass, number) {
 
 async function getStamps(grade, sClass, number) {
     try {
-        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
+        await checkAuthAndGetToken();
         const range = `${STAMPS_SHEET_NAME}!A:G`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -177,7 +176,7 @@ async function getStamps(grade, sClass, number) {
 
 async function saveStudentInfo(studentInfo) {
     try {
-        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
+        await checkAuthAndGetToken();
         const studentSheetName = STUDENTS_SHEET_NAME;
         const studentData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -228,7 +227,7 @@ async function saveStudentInfo(studentInfo) {
 
 async function saveStamps(studentInfo) {
     try {
-        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
+        await checkAuthAndGetToken();
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -282,7 +281,7 @@ async function saveStamps(studentInfo) {
 
 async function saveBestClubVote(studentInfo) {
     try {
-        await checkAuthAndGetToken(); // 사용자 상호작용 (버튼 클릭) 내부에서 호출됨
+        await checkAuthAndGetToken();
         const stampsSheetName = STAMPS_SHEET_NAME;
         const stampsData = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -325,40 +324,8 @@ async function saveBestClubVote(studentInfo) {
 // ClubList 시트에서 동아리 목록을 가져오는 함수
 async function getClubList() {
     try {
-        // getClubList는 앱 초기 로드 시 호출되므로,
-        // 여기서는 checkAuthAndGetToken을 직접 호출하지 않고
-        // loadGoogleAPI가 완료되어 gapi가 준비된 상태라고 가정합니다.
-        // 만약 초기 로드 시에도 인증이 필요하다면, 이 함수를 사용하는 시점을 재고해야 합니다.
-        // 현재는 'submitInfoBtn' 클릭 이후에 동아리 목록이 실제로 필요한 로직은 없습니다.
-        // (즉, 사용자 정보 입력 전에는 동아리 목록을 직접 가져오지 않음)
-        // 하지만 혹시 모를 상황에 대비하여 gapi가 로드되지 않았다면 에러를 발생시킬 수 있도록
-        // 로직을 추가하거나, getClubList도 checkAuthAndGetToken을 호출하도록 변경할 수 있습니다.
-        // 여기서는 초기 로딩 시 문제가 없었으니, 일단은 그대로 둡니다.
-        
-        // 주의: 현재 코드에서 DOMContentLoaded 내 getClubList()는 submitInfoBtn 클릭 전에 실행되므로
-        // 이 시점에서 checkAuthAndGetToken()을 호출하면 팝업 차단 문제가 다시 발생할 수 있습니다.
-        // getClubList는 "인증 없이" 공개된 스프레드시트에서 데이터를 읽는 경우에만 적합합니다.
-        // 인증이 필요한 경우, 이 함수도 사용자 상호작용 뒤에 호출되도록 조정해야 합니다.
-        // 지금은 "초기 동아리 목록 로드 완료: Array(0)" 메시지가 뜨는 것으로 보아,
-        // 인증 문제로 데이터를 못 가져오는 것으로 보입니다.
-
-        // 따라서 getClubList()도 인증이 필요하다면 아래와 같이 checkAuthAndGetToken()을 호출해야 합니다.
-        // 하지만 이 함수는 DOMContentLoaded 단계에서 호출되므로, 이 시점에 팝업이 뜨면 안됩니다.
-        // 해결책: 동아리 목록은 사용자 인증이 완료된 후에 가져오거나,
-        // 스프레드시트가 '웹에 게시'되어 인증 없이도 읽을 수 있도록 설정해야 합니다.
-
-        // 임시 해결책 (인증 필요 시): getClubList도 사용자 상호작용 뒤에 호출되도록 옮기거나,
-        // 스프레드시트를 웹에 게시하여 누구나 읽을 수 있게 하세요.
-        // 여기서는 임시로 getClubList에서 checkAuthAndGetToken을 주석 처리하고 에러 처리만 강화합니다.
-        // 실제 운영 환경에서는 스프레드시트 권한을 '웹에 게시'하거나,
-        // 동아리 목록 로드를 사용자 정보 입력 이후로 옮겨야 합니다.
-
-        if (!gapi || !gapi.client || !gapi.client.sheets) {
-            console.error("gapi 클라이언트가 아직 준비되지 않아 동아리 목록을 로드할 수 없습니다.");
-            throw new Error("Google Sheets API not ready for club list.");
-        }
-
-        const range = `${CLUB_LIST_SHEET_NAME}!A:B`; // Club ID, Club Name
+        await checkAuthAndGetToken(); // 동아리 목록 로드에도 인증 필요
+        const range = `${CLUB_LIST_SHEET_NAME}!A:B`;
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
             range: range,
@@ -382,14 +349,14 @@ async function getClubList() {
         return clubs;
     } catch (error) {
         console.error("동아리 목록 로드 중 오류 발생:", error);
-        // alert("동아리 목록 로드 중 오류 발생: " + error.message); // 초기 로드 시 불필요한 alert 방지
+        alert("동아리 목록 로드 중 오류 발생: " + error.message);
         return [];
     }
 }
 
 
 // ====================================================================
-// HTML 요소 및 이벤트 리스너 (DOM 조작) - index.html 구조에 맞춰 변경
+// HTML 요소 및 이벤트 리스너 (DOM 조작)
 // ====================================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -437,14 +404,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     showScreen(splashScreen);
     
-    // 이 시점에서는 getClubList()가 인증 없이 스프레드시트를 읽을 수 있도록 설정되었거나
-    // 아니면 나중에 인증 후 호출되도록 해야 합니다.
-    // 현재는 '초기 동아리 목록 로드 완료: Array(0)' 이 뜨므로, 인증 문제일 가능성이 높습니다.
-    // 따라서 getClubList()를 'submitInfoBtn' 클릭 이벤트 내부로 옮겨야 합니다.
-    // 임시로 DOMContentLoaded에서 호출은 유지하되, 나중에는 위치를 변경해야 할 수 있습니다.
-    clubDataList = await getClubList();
-    console.log("초기 동아리 목록 로드 완료:", clubDataList);
-
+    // 초기 로드 시 getClubList() 호출을 제거합니다.
+    // clubDataList는 이제 submitInfoBtn 클릭 시점에 로드됩니다.
 
     submitInfoBtn.addEventListener('click', async () => {
         const grade = inputGrade.value;
@@ -460,10 +421,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const student = { grade, sClass, number, name };
 
         try {
-            // !!! 핵심 수정: submitInfoBtn 클릭 시점에만 checkAuthAndGetToken 호출 !!!
-            // 여기서 checkAuthAndGetToken()을 호출하여 사용자에게 Google 로그인 팝업을 띄웁니다.
-            // 이 호출이 성공해야 sheets API를 사용할 수 있습니다.
+            // 사용자 상호작용 (버튼 클릭) 시점에만 checkAuthAndGetToken 호출
             await checkAuthAndGetToken();
+
+            // 이제 Sheets API를 사용할 준비가 되었으므로 동아리 목록을 로드
+            // 이 시점에 로드하면 인증 후이므로 Sheets API에 접근 가능합니다.
+            clubDataList = await getClubList(); 
+            console.log("동아리 목록 로드 완료:", clubDataList);
+            if (clubDataList.length === 0) {
+                alert("동아리 목록을 가져오지 못했습니다. 스프레드시트 설정 또는 인터넷 연결을 확인해주세요.");
+            }
+
 
             // 학생 정보 확인
             const existingStudent = await getStudentInfo(grade, sClass, number);
@@ -511,10 +479,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateStampImages();
             updateTenStampsMessage();
             showScreen(mainContent);
-
-            // 동아리 목록도 필요하다면 이 시점에서 다시 로드 (인증이 필요한 경우)
-            // clubDataList = await getClubList();
-            // console.log("갱신된 동아리 목록 로드 완료:", clubDataList);
 
         } catch (error) {
             console.error('학생 정보 처리 중 오류 발생:', error);
