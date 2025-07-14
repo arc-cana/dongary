@@ -27,17 +27,19 @@ function loadGoogleAPI() {
         gisScript.src = 'https://accounts.google.com/gsi/client';
         gisScript.async = true;
         gisScript.defer = true;
+        
         gisScript.onload = () => {
-            // GIS 라이브러리가 완전히 준비될 시간을 약간 줍니다.
-            setTimeout(() => {
-                if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initOAuth2TokenClient === 'function') {
+            console.log("GIS 스크립트 로드 완료. google 객체 확인:", typeof google);
+            if (typeof google !== 'undefined' && google.accounts) {
+                console.log("google.accounts 객체 확인:", google.accounts);
+                if (google.accounts.oauth2 && typeof google.accounts.oauth2.initOAuth2TokenClient === 'function') {
                     gisLoaded = true; // 로드 완료 플래그 설정
                     tokenClient = google.accounts.oauth2.initOAuth2TokenClient({
                         client_id: CLIENT_ID,
                         scope: SCOPES,
                         callback: '', // 콜백은 requestAccessToken 호출 시 동적으로 제공됩니다.
                     });
-                    console.log("Google Identity Services 로드 완료.");
+                    console.log("Google Identity Services 초기화 성공.");
 
                     // gapi (Google API 클라이언트) 라이브러리 로드
                     const gapiScript = document.createElement('script');
@@ -61,14 +63,16 @@ function loadGoogleAPI() {
                     };
                     document.head.appendChild(gapiScript);
                 } else {
-                    // console.error("Google Identity Services 라이브러리가 완전히 로드되지 않았거나 initOAuth2TokenClient를 찾을 수 없습니다.");
-                    // alert("앱 초기화 중 오류가 발생했습니다. (Google 인증 초기화 실패)"); // 사용자에게 알림
-                    reject(new Error("GIS initOAuth2TokenClient not found or not fully loaded"));
+                    console.error("GIS 라이브러리 로드 완료 후 'google.accounts.oauth2.initOAuth2TokenClient' 함수를 찾을 수 없습니다. 'google.accounts.oauth2' 객체 상태:", google.accounts.oauth2);
+                    reject(new Error("GIS initOAuth2TokenClient not found after load"));
                 }
-            }, 100); // 100ms 지연
+            } else {
+                console.error("GIS 스크립트 로드 완료 후 'google' 또는 'google.accounts' 객체를 찾을 수 없습니다.");
+                reject(new Error("Google GIS objects not found after load"));
+            }
         };
         gisScript.onerror = (err) => {
-            console.error("GIS 스크립트 로드 실패:", err);
+            console.error("GIS 스크립트 로드 실패: ", err);
             reject(err);
         };
         document.head.appendChild(gisScript);
@@ -108,7 +112,7 @@ loadGoogleAPI().then(() => {
     console.log("Google API 클라이언트 및 Identity Services 로드 완료. 이제 인증이 가능합니다.");
 }).catch(error => {
     console.error("Google API 로드 또는 초기화 실패:", error);
-    alert("앱 초기화 중 오류가 발생했습니다. 개발자 도구 콘솔을 확인해주세요.");
+    alert("앱 초기화 중 오류가 발생했습니다. 개발자 도구 콘솔을 확인해주세요. (오류: " + (error.message || error) + ")");
 });
 
 // ====================================================================
@@ -396,7 +400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let currentStudent = null; // 현재 확인된 학생 정보 저장
     let currentStampedClubs = []; // 현재 학생이 찍은 스탬프 동아리 ID 배열
-    let clubDataList = []; // 동아리 목록 데이터를 저장할 변
+    let clubDataList = []; // 동아리 목록 데이터를 저장할 변수
 
     // 화면 전환 함수 - index.html의 실제 ID에 맞춰서 수정
     function showScreen(screenElement) {
