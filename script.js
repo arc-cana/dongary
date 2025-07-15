@@ -109,7 +109,14 @@ async function startWebcam() {
             requestAnimationFrame(tick);
         } else {
             console.warn('jsQR 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도합니다.');
-            setTimeout(() => requestAnimationFrame(tick), 500);
+            // jsQR 로드가 지연될 경우를 대비
+            setTimeout(() => {
+                if (typeof jsQR !== 'undefined') {
+                    requestAnimationFrame(tick);
+                } else {
+                    qrResult.textContent = 'QR 스캐너 로딩 실패. 새로고침 해주세요.';
+                }
+            }, 1000); 
         }
 
     } catch (err) {
@@ -121,19 +128,21 @@ async function startWebcam() {
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
-    // 1. 스캔이 일시 정지된 상태이거나 관리자 모드이면, 스캔을 중단하고 비디오를 멈춤
-    if (isScanningPaused || isAdminMode) { 
+    // 1. 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔을 중단하고 비디오를 멈춤
+    if (isAdminMode || isScanningPaused) { 
         if (qrVideo.srcObject && !qrVideo.paused) {
-            qrVideo.pause();
+            qrVideo.pause(); // 확실히 비디오 중지
         }
-        return; 
+        return; // 이 상태에서는 더 이상 tick을 재귀적으로 호출하지 않음
     }
 
-    // 2. 비디오가 일시 정지되어 있다면 다시 재생 시도 (스캔 가능한 상태일 때)
+    // 2. 스캔이 가능하고 비디오가 멈춰있다면 재생 시도
+    // 이 부분은 비디오가 어떤 이유로든 멈췄을 때 다시 시작하도록 합니다.
     if (qrVideo.srcObject && qrVideo.paused) {
         qrVideo.play();
+        // 재생이 즉시 되지 않을 수 있으므로 다음 프레임에 다시 tick 호출
         requestAnimationFrame(tick);
-        return; 
+        return; // 현재 프레임에서는 스캔 로직을 건너뜀
     }
 
     // 3. 비디오 데이터가 충분한지 확인
@@ -153,30 +162,34 @@ function tick() {
 
         if (code) { // 4. QR 코드 스캔 성공
             noCodeFoundCount = 0; 
-            lastScanAttemptMessage = `스캔 성공: ${code.data}`; 
-            qrResult.textContent = lastScanAttemptMessage;
+            qrResult.textContent = `스캔 성공: ${code.data}`; 
             
+            // 성공 시 스캔 일시 정지 및 비디오 멈춤
             isScanningPaused = true; 
-            qrVideo.pause(); 
+            if (qrVideo.srcObject && !qrVideo.paused) { // 이미 멈춰있지 않으면 멈춤
+                qrVideo.pause(); 
+            }
 
             if (code.data === ADMIN_QR_CODE_DATA) {
                 isAdminMode = true;
                 alert('관리자 모드에 진입했습니다.');
                 showAdminControls();
+                // 관리자 모드 진입 후에는 tick 재귀 호출 없음 (exitAdminMode에서 재개)
             } else {
                 processQRData(code.data);
-                // 1.5초 후 스캔 재개
+                // 1.5초 후 스캔 재개 로직 실행
                 setTimeout(() => {
-                    isScanningPaused = false; 
-                    qrVideo.play(); 
-                    qrResult.textContent = 'QR 코드를 스캔 중...'; 
-                    requestAnimationFrame(tick);
-                }, 1500); // <<< 여기를 1.5초(1500ms)로 변경
+                    isScanningPaused = false; // 스캔 일시 정지 해제
+                    qrResult.textContent = 'QR 코드를 스캔 중...'; // 메시지 초기화
+                    // 비디오는 isScanningPaused가 false가 되면 tick 함수 시작 부분에서 play()될 것임
+                    requestAnimationFrame(tick); // 다음 프레임 요청하여 스캔 재개
+                }, 1500); 
             }
 
-        } else { // 5. QR 코드를 찾지 못했을 경우 (스캔 계속)
+        } else { // 5. QR 코드를 찾지 못했을 경우
             noCodeFoundCount++; 
             if (noCodeFoundCount > 60 && noCodeFoundCount % 60 === 0) { 
+                // 1초마다 메시지 업데이트
                 const newMessage = 'QR 코드를 찾을 수 없습니다. 초점/거리 조절 중...';
                 if (qrResult.textContent !== newMessage) {
                     qrResult.textContent = newMessage;
@@ -184,17 +197,17 @@ function tick() {
             } else if (noCodeFoundCount === 1) { 
                 qrResult.textContent = 'QR 코드를 스캔 중...';
             }
-            requestAnimationFrame(tick); 
+            requestAnimationFrame(tick); // 다음 프레임에서 계속 스캔 시도
         }
     } else { // 6. 아직 비디오 데이터가 충분하지 않을 경우 (카메라 준비 중)
         noCodeFoundCount++; 
-        if (noCodeFoundCount % 60 === 0) { 
+        if (noCodeFoundCount % 60 === 0) {
             const newMessage = '카메라 준비 중...';
             if (qrResult.textContent !== newMessage) {
                 qrResult.textContent = newMessage;
             }
         }
-        requestAnimationFrame(tick); 
+        requestAnimationFrame(tick); // 비디오가 준비될 때까지 기다리며 재시도
     }
 }
 
@@ -202,6 +215,7 @@ function tick() {
 async function processQRData(data) {
     console.log("스캔된 원본 QR 데이터:", data);
 
+    // 1. 접두사 유효성 검사
     if (!data.startsWith(VALID_QR_PREFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다. (접두사 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
@@ -210,17 +224,20 @@ async function processQRData(data) {
 
     let actualData = data.substring(VALID_QR_PREFIX.length);
 
+    // 2. 접미사 유효성 검사 (설정되어 있을 경우)
     if (VALID_SECRET_SUFFIX && !actualData.endsWith(VALID_SECRET_SUFFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 QR 코드입니다. (보안 키 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 보안 키 불일치', data);
         return; 
     }
+    // 접미사가 있다면 실제 데이터에서 제거
     if (VALID_SECRET_SUFFIX) {
         actualData = actualData.substring(0, actualData.length - VALID_SECRET_SUFFIX.length);
     }
     
     console.log("처리할 실제 데이터:", actualData);
 
+    // 3. 동아리 번호 형식 검사 (예: "1반" 형식)
     const classNumberMatch = actualData.match(/^(\d+)반$/); 
 
     if (!classNumberMatch || !classNumberMatch[1]) {
@@ -231,6 +248,7 @@ async function processQRData(data) {
 
     const clubId = parseInt(classNumberMatch[1]); 
 
+    // 4. 동아리 번호 범위 검사
     if (clubId < 1 || clubId > TOTAL_CLASSES) {
         qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
         console.warn('유효하지 않은 동아리 번호:', clubId);
@@ -240,12 +258,14 @@ async function processQRData(data) {
     const stampIndex = clubId - 1; 
     const clubName = CLUB_NAMES[clubId]; 
 
+    // 5. 스탬프 이미지 요소 존재 여부 확인
     if (!stampImages[stampIndex]) {
         qrResult.textContent = '내부 오류: 스탬프 요소를 찾을 수 없습니다.';
         console.error('스탬프 요소를 찾을 수 없음:', stampIndex);
         return;
     }
 
+    // 6. 현재 로그인된 학생 ID 확인
     const currentStudentId = localStorage.getItem('currentStudentId');
     if (!currentStudentId) {
         qrResult.textContent = '로그인 정보가 없습니다. 다시 시작해주세요.';
@@ -253,17 +273,20 @@ async function processQRData(data) {
         return;
     }
 
+    // 7. Firebase 데이터베이스에 스탬프 상태 저장
     try {
         const stampPath = `stamps/${currentStudentId}/club${clubId}`;
         const stampSnapshot = await get(ref(database, stampPath)); 
 
         if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
+            // 스탬프가 찍히지 않았다면 새로 찍음
             await set(ref(database, stampPath), true); 
             stampImages[stampIndex].classList.remove('hidden');
             qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; 
             console.log(`${clubName} 스탬프가 찍혔습니다.`);
-            checkTenStamps(); 
+            checkTenStamps(); // 10개 스탬프 체크
         } else {
+            // 이미 찍힌 스탬프
             qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
             console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
         }
@@ -286,6 +309,7 @@ async function resetAllStamps() {
         try {
             await remove(ref(database, `stamps/${currentStudentId}`)); 
             await remove(ref(database, `votes/${currentStudentId}`)); 
+            // hasTenStamps 필드도 초기화
             await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: null }); 
 
             stampImages.forEach(stamp => {
@@ -310,6 +334,7 @@ async function loadStampState() {
     }
 
     try {
+        // 모든 스탬프 이미지를 숨긴 후, 데이터베이스 상태에 따라 다시 표시
         stampImages.forEach(stamp => stamp.classList.add('hidden')); 
 
         const snapshot = await get(ref(database, `stamps/${currentStudentId}`));
@@ -358,11 +383,13 @@ async function checkTenStamps() {
         if (stampedCount >= 10) {
             tenStampsMessage.classList.remove('hidden');
             
+            // 10개 이상 스탬프를 찍었을 경우 학생 데이터에 '출석인정' 상태 업데이트
             if (studentData && studentData.hasTenStamps !== "출석인정") {
-                await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: "출석인정" });
+                await update(studentRef, { hasTenStamps: "출석인정" });
                 console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
             }
 
+            // 투표 상태 확인 및 UI 업데이트
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             const votedClub = voteSnapshot.val();
 
@@ -379,10 +406,12 @@ async function checkTenStamps() {
             }
         } else {
             tenStampsMessage.classList.add('hidden');
+            // 10개 미만으로 스탬프를 찍었을 경우 '출석인정' 상태 제거
             if (studentData && studentData.hasTenStamps === "출석인정") {
                 await remove(ref(database, `students/${currentStudentId}/hasTenStamps`));
                 console.log(`학생 ${currentStudentId}의 출석인정 상태가 취소되었습니다.`);
             }
+            // 투표 관련 UI 초기화 및 비활성화
             bestClubVoteStatus.textContent = '';
             bestClubInput.value = '';
             bestClubInput.disabled = true;
@@ -394,7 +423,7 @@ async function checkTenStamps() {
     }
 }
 
-// 투표 버튼 클릭 이벤트
+// 투표 버튼 클릭 이벤트 리스너
 submitBestClubBtn.addEventListener('click', async () => {
     const clubName = bestClubInput.value.trim();
     const currentStudentId = localStorage.getItem('currentStudentId');
@@ -406,27 +435,32 @@ submitBestClubBtn.addEventListener('click', async () => {
 
     if (clubName) {
         try {
+            // 이미 투표했는지 확인
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             if (voteSnapshot.exists()) {
                 alert('이미 투표하셨습니다. 투표는 한 번만 가능합니다.');
                 return;
             }
 
+            // 유효한 동아리 이름인지 확인
             if (!CLUB_NAMES.includes(clubName)) {
                 alert('유효하지 않은 동아리 이름입니다. 정확한 이름을 입력해주세요.');
                 return;
             }
 
+            // 투표 확인 컨펌
             if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
+                // 학생별 투표 기록
                 await set(ref(database, `votes/${currentStudentId}`), clubName);
                 
+                // 동아리별 투표 수 증가 (트랜잭션으로 동시성 문제 방지)
                 const clubVotesRef = ref(database, `clubVotes/${clubName}`);
                 await runTransaction(clubVotesRef, (currentVotes) => {
                     return (currentVotes || 0) + 1;
                 });
 
                 alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
-                checkTenStamps(); 
+                checkTenStamps(); // 투표 상태 UI 업데이트
             }
         } catch (error) {
             console.error("Firebase 투표 저장 실패:", error);
@@ -444,23 +478,26 @@ function showAdminControls() {
     isAdminMode = true; 
     isScanningPaused = true; 
 
-    controlsDiv.innerHTML = ''; 
+    controlsDiv.innerHTML = ''; // 기존 버튼 모두 제거
 
+    // 각 동아리별 스탬프 제어 버튼 생성
     for (let i = 1; i <= TOTAL_CLASSES; i++) { 
         const classButton = document.createElement('button');
         classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; 
         classButton.classList.add('class-control-button');
-        classButton.dataset.class = i;
+        classButton.dataset.class = i; // 데이터 속성으로 동아리 번호 저장
         classButton.addEventListener('click', handleClassStampControl);
         controlsDiv.appendChild(classButton);
     }
     
+    // 관리자 모드 종료 버튼
     const exitAdminButton = document.createElement('button');
     exitAdminButton.textContent = '관리자 모드 종료';
     exitAdminButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitAdminButton);
 
     qrResult.textContent = '관리자 모드: 원하는 동아리를 선택하세요.';
+    // 관리자 모드 진입 시 확실히 비디오를 멈춤
     if (qrVideo.srcObject && !qrVideo.paused) { 
         qrVideo.pause(); 
     }
@@ -468,8 +505,8 @@ function showAdminControls() {
 
 function showMasterControls() {
     isMasterMode = true;
-    isAdminMode = true; 
-    isScanningPaused = true; 
+    isAdminMode = true; // 마스터 모드도 관리자 모드의 일종
+    isScanningPaused = true; // 스캔 일시 정지 유지
     controlsDiv.innerHTML = '';
 
     qrResult.textContent = 'MASTER KEY 활성화: 모든 스탬프를 제어할 수 있습니다.';
@@ -494,10 +531,12 @@ function showMasterControls() {
     }
 }
 
+// 각 동아리 스탬프 제어 버튼 클릭 핸들러
 async function handleClassStampControl(event) {
     const classNumber = event.target.dataset.class;
     const password = prompt(`${CLUB_NAMES[classNumber]} 비밀번호를 입력하세요:`); 
 
+    // 마스터 키 확인 (특정 동아리 번호와 연동)
     if (classNumber === '10' && password === MASTER_KEY) { 
         showMasterControls();
         return;
@@ -520,6 +559,7 @@ async function handleClassStampControl(event) {
 
             if (currentStamp) {
                 if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
+                    // 스탬프가 찍히지 않았다면 새로 찍음
                     await set(ref(database, stampPath), true);
                     currentStamp.classList.remove('hidden');
                     qrResult.textContent = `✅ ${clubName} 스탬프가 관리자에 의해 찍혔습니다!`; 
@@ -527,6 +567,7 @@ async function handleClassStampControl(event) {
                     console.log(`${clubName} 스탬프 관리자 찍기 완료.`);
                     checkTenStamps(); 
                 } else { 
+                    // 이미 찍힌 스탬프라면 취소 여부 확인
                     if (confirm(`${clubName} 스탬프를 취소하시겠습니까?`)) { 
                         await remove(ref(database, stampPath));
                         currentStamp.classList.add('hidden');
@@ -546,6 +587,7 @@ async function handleClassStampControl(event) {
     }
 }
 
+// 모든 스탬프 채우기 함수
 async function fillAllStamps() {
     if (confirm('모든 스탬프를 채우시겠습니까?')) {
         const currentStudentId = localStorage.getItem('currentStudentId');
@@ -574,16 +616,18 @@ async function fillAllStamps() {
     }
 }
 
+// 관리자 모드 종료 함수
 function exitAdminMode() {
     isAdminMode = false;
     isMasterMode = false;
     isScanningPaused = false; 
     
-    controlsDiv.innerHTML = ''; 
+    controlsDiv.innerHTML = ''; // 관리자 버튼 숨기기
 
-    loadStampState(); 
+    loadStampState(); // 현재 스탬프 상태 로드
     qrResult.textContent = '관리자 모드를 종료했습니다. QR 코드를 스캔 중...';
     console.log('관리자 모드 종료.');
+    // 관리자 모드에서 나와 스캔을 재개할 때 비디오를 확실히 재생시키고 tick 호출
     if (qrVideo.srcObject && qrVideo.paused) { 
         qrVideo.play();
     }
@@ -593,27 +637,29 @@ function exitAdminMode() {
 
 // --- 이벤트 리스너 연결 ---
 submitInfoBtn.addEventListener('click', async () => {
-    const grade = gradeInput.value.padStart(2, '0');
-    const classNum = classInput.value.padStart(2, '0');
-    const number = numberInput.value.padStart(2, '0');
+    const grade = gradeInput.value.padStart(2, '0'); // 두 자리로 패딩
+    const classNum = classInput.value.padStart(2, '0'); // 두 자리로 패딩
+    const number = numberInput.value.padStart(2, '0'); // 두 자리로 패딩
     const name = nameInput.value.trim();
 
     if (grade && classNum && number && name) {
-        const studentId = `${grade}-${classNum}-${number}`; 
+        const studentId = `${grade}-${classNum}-${number}`; // 학번 형식 통일
 
         try {
+            // 학생 정보 저장 또는 업데이트
             await set(ref(database, `students/${studentId}`), {
                 grade: grade,
                 classNum: classNum,
                 number: number,
                 name: name,
-                hasTenStamps: null 
+                hasTenStamps: null // 초기에는 10개 스탬프 상태 없음
             });
+            // 기존 투표 정보 초기화 (새로운 학생 등록 시)
             await remove(ref(database, `votes/${studentId}`));
 
-            localStorage.setItem('currentStudentId', studentId); 
+            localStorage.setItem('currentStudentId', studentId); // 로컬 스토리지에 학번 저장
             studentDisplay.textContent = `학번: ${grade}학년 ${classNum}반 ${number}번 | 이름: ${name}`;
-            showScreen(mainContentScreen);
+            showScreen(mainContentScreen); // 메인 화면으로 전환
         } catch (error) {
             console.error("Firebase 학생 정보 저장 실패:", error);
             alert("학생 정보 저장에 실패했습니다: " + error.message);
@@ -632,8 +678,9 @@ closeLocationGuideBtn.addEventListener('click', () => {
 });
 
 
-// 초기 로드 시 스플래시 화면 표시
+// 초기 로드 시 스플래시 화면 표시 및 학생 정보 로드
 window.addEventListener('load', async () => {
+    // Firebase Database 인스턴스가 전역으로 노출되어 있는지 확인
     if (window.database) {
         database = window.database; 
     } else {
@@ -646,21 +693,25 @@ window.addEventListener('load', async () => {
 
     if (currentStudentId) {
         try {
+            // 저장된 학생 정보가 있다면 로드하여 메인 화면으로 이동
             const snapshot = await get(ref(database, `students/${currentStudentId}`));
             const studentData = snapshot.val();
             if (studentData) {
                 studentDisplay.textContent = `학번: ${studentData.grade}학년 ${studentData.classNum}반 ${studentData.number}번 | 이름: ${studentData.name}`;
                 showScreen(mainContentScreen);
             } else {
+                // 정보가 없으면 로컬 스토리지 정보 삭제 및 스플래시 화면 표시
                 localStorage.removeItem('currentStudentId'); 
                 showScreen(splashScreen);
             }
         } catch (error) {
             console.error("Firebase 학생 정보 로드 실패:", error);
+            // 오류 발생 시 로컬 스토리지 정보 삭제 및 스플래시 화면 표시
             localStorage.removeItem('currentStudentId');
             showScreen(splashScreen);
         }
     } else {
+        // 저장된 학생 정보가 없으면 스플래시 화면 표시
         showScreen(splashScreen);
     }
 });
