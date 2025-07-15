@@ -90,7 +90,7 @@ function showScreen(screenToShow) {
 
 // --- 웹캠 시작 함수 ---
 async function startWebcam() {
-    if (qrVideo.srcObject) { // 기존 스트림이 있다면 중지하고 초기화
+    if (qrVideo.srcObject) { 
         qrVideo.srcObject.getTracks().forEach(track => track.stop());
         qrVideo.srcObject = null;
     }
@@ -102,7 +102,7 @@ async function startWebcam() {
         qrVideo.play(); 
 
         qrResult.textContent = 'QR 코드를 스캔 중...';
-        isScanningPaused = false; // 웹캠 시작 시 스캔 가능 상태로 설정
+        isScanningPaused = false; 
         noCodeFoundCount = 0; 
 
         if (typeof jsQR !== 'undefined') {
@@ -121,7 +121,7 @@ async function startWebcam() {
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
-    // 1. 스캔이 일시 정지된 상태이거나 관리자 모드이면 스캔 중지
+    // 1. 스캔이 일시 정지된 상태이거나 관리자 모드이면, 스캔을 중단하고 비디오를 멈춤
     if (isScanningPaused || isAdminMode) { 
         if (qrVideo.srcObject && !qrVideo.paused) {
             qrVideo.pause();
@@ -129,13 +129,14 @@ function tick() {
         return; 
     }
 
-    // 비디오가 재생 중이 아니라면 다시 재생 시도 (가끔 멈출 수 있음)
+    // 2. 비디오가 일시 정지되어 있다면 다시 재생 시도 (스캔 가능한 상태일 때)
     if (qrVideo.srcObject && qrVideo.paused) {
         qrVideo.play();
+        requestAnimationFrame(tick);
+        return; 
     }
 
-
-    // 2. 비디오 데이터가 충분한지 확인
+    // 3. 비디오 데이터가 충분한지 확인
     if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -150,12 +151,12 @@ function tick() {
             inversionAttempts: 'dontInvert', 
         });
 
-        if (code) { // 3. QR 코드 스캔 성공
+        if (code) { // 4. QR 코드 스캔 성공
             noCodeFoundCount = 0; 
             lastScanAttemptMessage = `스캔 성공: ${code.data}`; 
             qrResult.textContent = lastScanAttemptMessage;
             
-            isScanningPaused = true;
+            isScanningPaused = true; 
             qrVideo.pause(); 
 
             if (code.data === ADMIN_QR_CODE_DATA) {
@@ -164,15 +165,16 @@ function tick() {
                 showAdminControls();
             } else {
                 processQRData(code.data);
+                // 1.5초 후 스캔 재개
                 setTimeout(() => {
                     isScanningPaused = false; 
                     qrVideo.play(); 
                     qrResult.textContent = 'QR 코드를 스캔 중...'; 
                     requestAnimationFrame(tick);
-                }, 3000); 
+                }, 1500); // <<< 여기를 1.5초(1500ms)로 변경
             }
 
-        } else { // 4. QR 코드를 찾지 못했을 경우
+        } else { // 5. QR 코드를 찾지 못했을 경우 (스캔 계속)
             noCodeFoundCount++; 
             if (noCodeFoundCount > 60 && noCodeFoundCount % 60 === 0) { 
                 const newMessage = 'QR 코드를 찾을 수 없습니다. 초점/거리 조절 중...';
@@ -184,7 +186,7 @@ function tick() {
             }
             requestAnimationFrame(tick); 
         }
-    } else { // 5. 아직 비디오 데이터가 충분하지 않을 경우 (카메라 준비 중)
+    } else { // 6. 아직 비디오 데이터가 충분하지 않을 경우 (카메라 준비 중)
         noCodeFoundCount++; 
         if (noCodeFoundCount % 60 === 0) { 
             const newMessage = '카메라 준비 중...';
@@ -357,7 +359,7 @@ async function checkTenStamps() {
             tenStampsMessage.classList.remove('hidden');
             
             if (studentData && studentData.hasTenStamps !== "출석인정") {
-                await update(studentRef, { hasTenStamps: "출석인정" });
+                await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: "출석인정" });
                 console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
             }
 
@@ -582,7 +584,7 @@ function exitAdminMode() {
     loadStampState(); 
     qrResult.textContent = '관리자 모드를 종료했습니다. QR 코드를 스캔 중...';
     console.log('관리자 모드 종료.');
-    if (qrVideo.srcObject && qrVideo.paused) { // 비디오가 멈춰있었다면 다시 재생
+    if (qrVideo.srcObject && qrVideo.paused) { 
         qrVideo.play();
     }
     requestAnimationFrame(tick);
