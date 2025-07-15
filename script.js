@@ -55,7 +55,7 @@ const CLASS_PASSWORDS = {
 
 let isAdminMode = false;
 let isMasterMode = false;
-let isScanningPaused = false; // 추가: 스캔 일시 정지 상태를 나타내는 플래그
+let isScanningPaused = false; // 스캔 일시 정지 상태를 나타내는 플래그 (현재 임시로 비활성화됨)
 
 // --- 화면 전환 함수 ---
 function showScreen(screenToShow) {
@@ -82,7 +82,7 @@ function showScreen(screenToShow) {
             qrVideo.srcObject.getTracks().forEach(track => track.stop());
             qrVideo.srcObject = null;
         }
-        isScanningPaused = true; // 메인 화면이 아닐 경우 스캔 일시 정지
+        isScanningPaused = true; // 메인 화면이 아닐 경우 스캔 일시 정지 (현재 tick 함수에서 이 조건은 임시로 무시됨)
     }
 }
 
@@ -111,9 +111,10 @@ async function startWebcam() {
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
-    if (isAdminMode || isScanningPaused) { // 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔 시도하지 않음
-        return;
-    }
+    // // 아래 두 줄은 임시로 주석 처리하여 스캔 일시 정지 조건을 무력화합니다.
+    // if (isAdminMode || isScanningPaused) { 
+    //     return;
+    // }
 
     if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
         const canvas = document.createElement('canvas');
@@ -130,11 +131,10 @@ function tick() {
         });
 
         if (code) {
-            console.log('QR 코드 스캔 성공:', code.data);
+            console.log('QR 코드 스캔 성공:', code.data); // 이 메시지가 콘솔에 찍히는지 확인해주세요!
             qrResult.textContent = `스캔 성공: ${code.data}`;
             
-            // QR 코드를 성공적으로 스캔하면 스캔을 일시 정지
-            isScanningPaused = true;
+            // isScanningPaused = true; // 이 줄도 임시로 주석 처리하여 스캔 일시 정지를 강제로 해제합니다.
             qrVideo.pause(); 
 
             if (code.data === ADMIN_QR_CODE_DATA) {
@@ -148,7 +148,7 @@ function tick() {
             // 관리자 모드가 아니면 일정 시간 후 스캔 재개
             if (!isAdminMode) {
                 setTimeout(() => {
-                    isScanningPaused = false; // 스캔 일시 정지 해제
+                    // isScanningPaused = false; // 이 줄도 임시로 주석 처리
                     qrVideo.play();
                     qrResult.textContent = 'QR 코드를 스캔 중...';
                     requestAnimationFrame(tick);
