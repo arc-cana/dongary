@@ -65,18 +65,29 @@
 
         <div class="controls">
         </div>
-
-        <button id="showLocationGuideBtn">동아리 위치 안내</button>
+        
+        <div class="main-buttons-container">
+            <button id="showLocationGuideBtn">동아리 위치 안내</button>
+            <button id="showHowToPlayBtn">진행 방법 안내</button>
+        </div>
     </div>
 
     <div id="location-guide-screen" class="screen hidden">
         <h2>동아리 위치 안내</h2>
-        <div class="club-list-container">
+        <div class="guide-image-container">
             <img src="./images/club_locations_map.jpg" alt="모든 동아리 위치 안내 지도">
-
             <p>* 위 이미지는 전체 동아리 위치 안내 지도입니다. 실제 위치는 변경될 수 있습니다.</p>
         </div>
         <button id="closeLocationGuideBtn">돌아가기</button>
+    </div>
+
+    <div id="how-to-play-screen" class="screen hidden">
+        <h2>진행 방법 안내</h2>
+        <div class="guide-image-container">
+            <img src="./images/how_to_play_guide.jpg" alt="스탬프 랠리 진행 방법">
+            <p>* 궁금한 점은 운영 본부에 문의해주세요.</p>
+        </div>
+        <button id="closeHowToPlayBtn">돌아가기</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js"></script>

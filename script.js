@@ -5,6 +5,7 @@ import { getDatabase, ref, set, get, update, remove, runTransaction } from "http
 const splashScreen = document.getElementById('splash-screen');
 const mainContentScreen = document.getElementById('main-content');
 const locationGuideScreen = document.getElementById('location-guide-screen');
+const howToPlayScreen = document.getElementById('how-to-play-screen'); // <-- 새로 추가
 
 const gradeInput = document.getElementById('gradeInput');
 const classInput = document.getElementById('classInput');
@@ -17,7 +18,9 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
+const showHowToPlayBtn = document.getElementById('showHowToPlayBtn'); // <-- 새로 추가
 const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); 
+const closeHowToPlayBtn = document.getElementById('closeHowToPlayBtn'); // <-- 새로 추가
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -61,11 +64,12 @@ let isScanningPaused = false;
 let noCodeFoundCount = 0; 
 let lastScanAttemptMessage = 'QR 코드를 스캔 중...'; 
 
-// --- 화면 전환 함수 ---
+// --- 화면 전환 함수 (수정) ---
 function showScreen(screenToShow) {
     splashScreen.classList.add('hidden');
     mainContentScreen.classList.add('hidden');
     locationGuideScreen.classList.add('hidden');
+    howToPlayScreen.classList.add('hidden'); // <-- 새로 추가
 
     screenToShow.classList.remove('hidden');
 
@@ -699,8 +703,18 @@ showLocationGuideBtn.addEventListener('click', () => {
     showScreen(locationGuideScreen);
 });
 
+// 새로 추가된 진행 방법 안내 버튼 이벤트 리스너
+showHowToPlayBtn.addEventListener('click', () => { // <-- 새로 추가
+    showScreen(howToPlayScreen); // <-- 새로 추가
+});
+
 closeLocationGuideBtn.addEventListener('click', () => {
     showScreen(mainContentScreen);
+});
+
+// 새로 추가된 진행 방법 안내 화면 닫기 버튼 이벤트 리스너
+closeHowToPlayBtn.addEventListener('click', () => { // <-- 새로 추가
+    showScreen(mainContentScreen); // <-- 새로 추가
 });
 
 

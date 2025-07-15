@@ -141,8 +141,8 @@ body {
     top: 0;
     left: 0;
 }
-/* 동아리 위치 안내 화면 스타일 (main-content와 유사하나, 이미지에 최적화) */
-#location-guide-screen {
+/* 동아리 위치 안내 화면 및 진행 방법 안내 화면 스타일 (main-content와 유사하나, 이미지에 최적화) */
+#location-guide-screen, #how-to-play-screen { /* <-- #how-to-play-screen 추가 */
     background-color: rgba(255, 255, 255, 0.95);
     color: #333;
     border-radius: 15px;
@@ -163,7 +163,7 @@ body {
 }
 
 
-#main-content .header, #location-guide-screen h2 {
+#main-content .header, #location-guide-screen h2, #how-to-play-screen h2 { /* <-- #how-to-play-screen h2 추가 */
     text-align: center;
     margin-bottom: 20px;
     color: #0056b3;
@@ -278,7 +278,7 @@ body {
     width: 100%;
 }
 
-.controls button, #showLocationGuideBtn, #closeLocationGuideBtn {
+.controls button { /* #showLocationGuideBtn, #closeLocationGuideBtn 에서 분리 */
     background-color: #007bff;
     color: white;
     padding: 10px 15px;
@@ -292,21 +292,39 @@ body {
     max-width: 200px; /* 최대 너비 */
 }
 
-.controls button:hover, #showLocationGuideBtn:hover, #closeLocationGuideBtn:hover {
+.controls button:hover {
     background-color: #0056b3;
 }
 
-#showLocationGuideBtn, #closeLocationGuideBtn {
+/* 메인 화면 하단 버튼 컨테이너 */
+.main-buttons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     margin-top: 20px;
+    justify-content: center;
     width: 100%;
-    max-width: 300px;
-    padding: 12px 15px;
-    font-size: 1em;
 }
 
-/* 동아리 위치 안내 화면 내부 스타일 */
-.club-list-container {
-    /* 기존 텍스트 목록에 대한 스타일을 이미지에 맞게 변경 */
+.main-buttons-container button, #closeLocationGuideBtn, #closeHowToPlayBtn { /* <-- #closeHowToPlayBtn 추가 */
+    background-color: #007bff;
+    color: white;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+    flex-grow: 1; /* 유연하게 공간 차지 */
+    max-width: 300px; /* 최대 너비 */
+}
+
+.main-buttons-container button:hover, #closeLocationGuideBtn:hover, #closeHowToPlayBtn:hover {
+    background-color: #0056b3;
+}
+
+/* 동아리 위치/진행 방법 안내 화면 내부 이미지 컨테이너 스타일 */
+.guide-image-container { /* <-- 클래스 이름 변경 및 적용 */
     display: flex; /* 내부 콘텐츠 (이미지, p 태그)를 flexbox로 관리 */
     flex-direction: column; /* 세로 방향으로 정렬 */
     justify-content: flex-start; /* 콘텐츠 상단 정렬 */
@@ -327,8 +345,8 @@ body {
     -webkit-overflow-scrolling: touch; /* iOS에서 스크롤 부드럽게 */
 }
 
-/* 새로 추가할 이미지에 대한 스타일 */
-.club-list-container img {
+/* 안내 화면 내 이미지 스타일 */
+.guide-image-container img {
     max-width: 100%; /* 부모 컨테이너 너비에 맞춰 이미지 크기 조절 */
     height: auto; /* 이미지 비율 유지 */
     display: block; /* 이미지 아래 불필요한 여백 제거 */
@@ -338,8 +356,8 @@ body {
     margin-bottom: 15px; /* 이미지 하단 여백 */
 }
 
-/* club-list-container 내의 p 태그 (예: "* 위 이미지는 ...") 스타일 */
-.club-list-container p {
+/* 안내 화면 내 설명 텍스트 스타일 */
+.guide-image-container p {
     font-size: 0.9em;
     color: #777;
     line-height: 1.4;
@@ -376,13 +394,19 @@ body {
     #qr-video {
         height: 200px;
     }
-    .club-list-container {
+    /* .main-buttons-container 버튼도 모바일에서 flex-wrap 적용 */
+    .main-buttons-container button {
+        width: 100%; /* 모바일에서 각 버튼이 한 줄을 차지하도록 */
+        max-width: none; /* max-width 제한 해제 */
+    }
+
+    .guide-image-container { /* <-- 클래스 이름 변경 및 적용 */
         width: 100%;
         padding: 10px; /* 모바일에서 패딩 조절 */
         max-width: 100%;
         max-height: calc(100vh - 120px); /* 모바일에서 높이 조절 */
     }
-    .club-list-container img {
+    .guide-image-container img {
         border-radius: 5px; /* 모바일에서 모서리 둥글게 조절 */
     }
 }
