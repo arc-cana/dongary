@@ -52,12 +52,12 @@ const CLUB_NAMES = [
 ];
 
 const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN";
-const MASTER_KEY = "1234"; 
+const MASTER_KEY = "8621"; 
 
 const CLASS_PASSWORDS = {
-    '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
-    '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
-    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005"
+    '1': "1720", '2': "2489", '3': "3549", '4': "4663", '5': "5278",
+    '6': "6091", '7': "7367", '8': "8691", '9': "9187", '10': "0267",
+    '11': "1419", '12': "2167", '13': "4987", '14': "3382", '15': "8277"
 };
 
 let isAdminMode = false;
@@ -251,7 +251,7 @@ async function processQRData(data) {
 
     // 1. 접두사 유효성 검사
     if (!data.startsWith(VALID_QR_PREFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다. (접두사 불일치)';
+        qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다.';
         console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
         return; 
     }
