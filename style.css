@@ -124,7 +124,7 @@ body {
 }
 
 /* 메인 콘텐츠 화면 스타일 */
-#main-content, #location-guide-screen {
+#main-content {
     background-color: rgba(255, 255, 255, 0.95); /* 거의 불투명한 흰색 배경 */
     color: #333;
     border-radius: 15px;
@@ -141,6 +141,27 @@ body {
     top: 0;
     left: 0;
 }
+/* 동아리 위치 안내 화면 스타일 (main-content와 유사하나, 이미지에 최적화) */
+#location-guide-screen {
+    background-color: rgba(255, 255, 255, 0.95);
+    color: #333;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    max-width: 90%;
+    max-height: 90vh; /* 화면 높이 제한, 내용이 넘칠 경우 스크롤 */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 이미지와 텍스트를 세로로 중앙 정렬 */
+    align-items: center; /* 가로 중앙 정렬 */
+    position: absolute;
+    top: 0;
+    left: 0;
+    padding-top: 20px; /* 상단 여백을 조금 줄여도 됨 */
+    text-align: center;
+}
+
 
 #main-content .header, #location-guide-screen h2 {
     text-align: center;
@@ -284,54 +305,48 @@ body {
 }
 
 /* 동아리 위치 안내 화면 내부 스타일 */
-#location-guide-screen {
-    justify-content: flex-start;
-    padding-top: 50px; /* 상단 여백 추가 */
-    text-align: center;
-}
-
 .club-list-container {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 20px;
-    text-align: left;
-    width: 90%;
-    max-width: 600px;
+    /* 기존 텍스트 목록에 대한 스타일을 이미지에 맞게 변경 */
+    display: flex; /* 내부 콘텐츠 (이미지, p 태그)를 flexbox로 관리 */
+    flex-direction: column; /* 세로 방향으로 정렬 */
+    justify-content: flex-start; /* 콘텐츠 상단 정렬 */
+    align-items: center; /* 가로 중앙 정렬 */
+    background-color: transparent; /* 이미지가 배경을 직접 덮도록 투명하게 */
+    border: none; /* 테두리 제거 */
+    box-shadow: none; /* 그림자 제거 */
+    padding: 10px; /* 패딩은 유지하거나 필요시 조절 */
+    margin-top: 10px; /* 상단 여백 조절 */
+    width: 95%; /* 화면 너비에 더 넓게 사용 */
+    max-width: 800px; /* 이미지의 최대 너비를 고려하여 조절 */
     box-sizing: border-box;
+    
+    /* 이미지 높이가 화면을 넘어갈 경우 스크롤 가능하게 */
+    max-height: calc(100vh - 150px); /* 화면 높이에서 헤더, 버튼 등 제외 */
+    overflow-y: auto; /* 내용이 넘치면 스크롤바 생성 */
+    
+    -webkit-overflow-scrolling: touch; /* iOS에서 스크롤 부드럽게 */
 }
 
-.club-list-container h3 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 1.5em;
+/* 새로 추가할 이미지에 대한 스타일 */
+.club-list-container img {
+    max-width: 100%; /* 부모 컨테이너 너비에 맞춰 이미지 크기 조절 */
+    height: auto; /* 이미지 비율 유지 */
+    display: block; /* 이미지 아래 불필요한 여백 제거 */
+    margin: 0 auto; /* 이미지를 컨테이너 중앙으로 정렬 */
+    border-radius: 8px; /* 이미지 모서리 둥글게 */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* 이미지에 그림자 효과 */
+    margin-bottom: 15px; /* 이미지 하단 여백 */
 }
 
-.club-list-container ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.club-list-container li {
-    padding: 8px 0;
-    border-bottom: 1px dotted #eee;
-    font-size: 1.1em;
-    color: #555;
-}
-
-.club-list-container li:last-child {
-    border-bottom: none;
-}
-
+/* club-list-container 내의 p 태그 (예: "* 위 이미지는 ...") 스타일 */
 .club-list-container p {
-    margin-top: 15px;
     font-size: 0.9em;
     color: #777;
     line-height: 1.4;
+    text-align: center; /* 중앙 정렬 */
+    margin-top: 0; /* 이미지와의 간격은 이미지의 margin-bottom으로 조절 */
 }
+
 
 /* 모바일 반응형 */
 @media (max-width: 600px) {
@@ -363,9 +378,11 @@ body {
     }
     .club-list-container {
         width: 100%;
-        padding: 15px;
+        padding: 10px; /* 모바일에서 패딩 조절 */
+        max-width: 100%;
+        max-height: calc(100vh - 120px); /* 모바일에서 높이 조절 */
     }
-    .club-list-container li {
-        font-size: 1em;
+    .club-list-container img {
+        border-radius: 5px; /* 모바일에서 모서리 둥글게 조절 */
     }
 }
