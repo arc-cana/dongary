@@ -17,7 +17,7 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); // 오타 수정 완료
+const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -55,6 +55,7 @@ const CLASS_PASSWORDS = {
 
 let isAdminMode = false;
 let isMasterMode = false;
+let isScanningPaused = false; // 추가: 스캔 일시 정지 상태를 나타내는 플래그
 
 // --- 화면 전환 함수 ---
 function showScreen(screenToShow) {
@@ -67,6 +68,7 @@ function showScreen(screenToShow) {
     if (screenToShow === mainContentScreen) {
         if (window.database) {
             database = window.database; 
+            isScanningPaused = false; // 메인 화면으로 돌아갈 때 스캔 일시 정지 해제
             startWebcam();
             loadStampState();
             checkTenStamps(); // 화면 전환 시 10개 스탬프 상태 및 투표 상태 확인
@@ -75,11 +77,12 @@ function showScreen(screenToShow) {
             alert("앱 초기화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
             showScreen(splashScreen);
         }
-    } else {
+    } else { 
         if (qrVideo.srcObject) {
             qrVideo.srcObject.getTracks().forEach(track => track.stop());
             qrVideo.srcObject = null;
         }
+        isScanningPaused = true; // 메인 화면이 아닐 경우 스캔 일시 정지
     }
 }
 
@@ -108,6 +111,10 @@ async function startWebcam() {
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
+    if (isAdminMode || isScanningPaused) { // 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔 시도하지 않음
+        return;
+    }
+
     if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -126,6 +133,10 @@ function tick() {
             console.log('QR 코드 스캔 성공:', code.data);
             qrResult.textContent = `스캔 성공: ${code.data}`;
             
+            // QR 코드를 성공적으로 스캔하면 스캔을 일시 정지
+            isScanningPaused = true;
+            qrVideo.pause(); 
+
             if (code.data === ADMIN_QR_CODE_DATA) {
                 isAdminMode = true;
                 alert('관리자 모드에 진입했습니다.');
@@ -134,25 +145,23 @@ function tick() {
                 processQRData(code.data);
             }
             
-            qrVideo.pause();
+            // 관리자 모드가 아니면 일정 시간 후 스캔 재개
             if (!isAdminMode) {
                 setTimeout(() => {
+                    isScanningPaused = false; // 스캔 일시 정지 해제
                     qrVideo.play();
                     qrResult.textContent = 'QR 코드를 스캔 중...';
                     requestAnimationFrame(tick);
-                }, 3000);
+                }, 3000); // 3초 후에 다시 스캔 시작
             }
 
         } else {
-            if (!isAdminMode) {
-                qrResult.textContent = 'QR 코드를 스캔 중...';
-                requestAnimationFrame(tick);
-            }
-        }
-    } else {
-        if (!isAdminMode) {
+            // QR 코드를 찾지 못했을 경우에만 다음 프레임 요청
             requestAnimationFrame(tick);
         }
+    } else {
+        // 아직 비디오 데이터가 충분하지 않을 경우 다음 프레임 요청
+        requestAnimationFrame(tick);
     }
 }
 
@@ -163,7 +172,7 @@ async function processQRData(data) {
     if (!data.startsWith(VALID_QR_PREFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다.';
         console.warn('유효하지 않은 QR 코드 스캔', data);
-        return;
+        return; // 유효하지 않은 QR 코드이므로 함수 종료
     }
 
     let actualData = data.substring(VALID_QR_PREFIX.length);
@@ -171,7 +180,7 @@ async function processQRData(data) {
     if (VALID_SECRET_SUFFIX && !actualData.endsWith(VALID_SECRET_SUFFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (보안 키 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 보안 키 불일치', data);
-        return;
+        return; // 유효하지 않은 QR 코드이므로 함수 종료
     }
     if (VALID_SECRET_SUFFIX) {
         actualData = actualData.substring(0, actualData.length - VALID_SECRET_SUFFIX.length);
@@ -186,7 +195,7 @@ async function processQRData(data) {
 
         if (clubId >= 1 && clubId <= TOTAL_CLASSES) {
             const stampIndex = clubId - 1; 
-            const clubName = CLUB_NAMES[clubId]; // 동아리 이름 가져오기
+            const clubName = CLUB_NAMES[clubId]; 
 
             if (stampImages[stampIndex]) {
                 const currentStudentId = localStorage.getItem('currentStudentId');
@@ -203,13 +212,15 @@ async function processQRData(data) {
                     if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
                         await set(ref(database, stampPath), true); 
                         stampImages[stampIndex].classList.remove('hidden');
-                        qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; // 동아리 이름 사용
+                        qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; 
                         console.log(`${clubName} 스탬프가 찍혔습니다.`);
-                        checkTenStamps(); // 스탬프 찍을 때마다 10개 달성 여부 확인
+                        checkTenStamps(); 
                     } else {
-                        qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; // 동아리 이름 사용
+                        qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
                         console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
                     }
+                    // 스탬프가 찍히거나 이미 찍혔음을 알린 후에는 추가적인 스캔을 막기 위해 여기서 함수를 종료
+                    // (tick 함수에서 setTimeout으로 다시 스캔을 시작할 것임)
                 } catch (error) {
                     console.error("Firebase 스탬프 처리 중 오류 발생:", error);
                     qrResult.textContent = '❌ 스탬프 처리 중 오류가 발생했습니다.';
@@ -220,11 +231,12 @@ async function processQRData(data) {
                 qrResult.textContent = '스탬프 요소를 찾을 수 없습니다. (HTML 구조 확인)';
             }
         } else {
-            qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; // 메시지 변경
+            qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
         }
     } else {
         qrResult.textContent = '❓ 알 수 없는 QR 코드 형식입니다. (예: "1반" 형식이어야 함)';
     }
+    // processQRData 함수는 여기서 종료되며, 웹캠 재개는 tick 함수 내의 setTimeout이 담당합니다.
 }
 
 // --- 모든 스탬프 초기화 함수 (이제 관리자 모드에서만 사용) ---
@@ -530,6 +542,7 @@ async function fillAllStamps() {
 function exitAdminMode() {
     isAdminMode = false;
     isMasterMode = false;
+    isScanningPaused = false; // 관리자 모드 종료 시 스캔 일시 정지 해제
     
     controlsDiv.innerHTML = ''; 
 
