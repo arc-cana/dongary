@@ -17,8 +17,7 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document = document.getElementById('closeLocationGuideBtn');
-
+const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
 const bestClubInput = document.getElementById('bestClubInput');
