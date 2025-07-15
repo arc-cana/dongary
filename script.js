@@ -73,13 +73,14 @@ function showScreen(screenToShow) {
         if (window.database) {
             database = window.database; 
             isScanningPaused = false; 
-            startWebcam(); 
+            startWebcam(); // 메인 화면 진입 시 웹캠 시작
             loadStampState();
             checkTenStamps();
         } else {
             console.error("Firebase Database가 초기화되지 않았습니다. 잠시 후 다시 시도합니다.");
         }
     } else { 
+        // 다른 화면으로 이동 시 웹캠 중지
         if (qrVideo.srcObject) {
             qrVideo.srcObject.getTracks().forEach(track => track.stop());
             qrVideo.srcObject = null;
@@ -88,9 +89,10 @@ function showScreen(screenToShow) {
     }
 }
 
-// --- 웹캠 시작 함수 ---
+// --- 웹캠 시작 함수 (수정됨) ---
 async function startWebcam() {
-    if (qrVideo.srcObject) { 
+    // 기존 스트림이 있다면 완전히 중지하고 해제하여 재시작 준비
+    if (qrVideo.srcObject) {
         qrVideo.srcObject.getTracks().forEach(track => track.stop());
         qrVideo.srcObject = null;
     }
@@ -99,12 +101,28 @@ async function startWebcam() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         qrVideo.srcObject = stream;
         qrVideo.setAttribute('playsinline', true); 
+        
+        // 비디오 메타데이터가 로드될 때까지 기다린 후 재생
+        await new Promise(resolve => {
+            qrVideo.onloadedmetadata = () => {
+                resolve();
+            };
+            // 타임아웃 추가: 특정 시간 내에 메타데이터 로드 안 되면 실패로 간주
+            setTimeout(() => {
+                if (!qrVideo.onloadedmetadata) { // 이미 resolve되지 않았다면
+                    console.warn('Metadata timeout for QR video.');
+                    resolve(); // 강제로 resolve하여 다음 단계로 진행 (그러나 실제 재생 실패 가능성 높음)
+                }
+            }, 3000); // 3초 타임아웃
+        });
+        
         qrVideo.play(); 
 
         qrResult.textContent = 'QR 코드를 스캔 중...';
         isScanningPaused = false; 
         noCodeFoundCount = 0; 
 
+        // jsQR 라이브러리 로드 확인 후 tick 시작
         if (typeof jsQR !== 'undefined') {
             requestAnimationFrame(tick);
         } else {
@@ -115,6 +133,7 @@ async function startWebcam() {
                     requestAnimationFrame(tick);
                 } else {
                     qrResult.textContent = 'QR 스캐너 로딩 실패. 새로고침 해주세요.';
+                    console.error('jsQR 라이브러리 로드 실패 또는 너무 오래 걸림.');
                 }
             }, 1000); 
         }
@@ -126,7 +145,7 @@ async function startWebcam() {
     }
 }
 
-// --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
+// --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) (수정됨) ---
 function tick() {
     // 1. 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔을 중단하고 비디오를 멈춤
     if (isAdminMode || isScanningPaused) { 
@@ -136,12 +155,19 @@ function tick() {
         return; // 이 상태에서는 더 이상 tick을 재귀적으로 호출하지 않음
     }
 
-    // 2. 스캔이 가능하고 비디오가 멈춰있다면 재생 시도
+    // 2. 비디오가 재생 중이 아니라면 (그리고 스트림이 있다면) 재생 시도
     // 이 부분은 비디오가 어떤 이유로든 멈췄을 때 다시 시작하도록 합니다.
     if (qrVideo.srcObject && qrVideo.paused) {
-        qrVideo.play();
-        // 재생이 즉시 되지 않을 수 있으므로 다음 프레임에 다시 tick 호출
-        requestAnimationFrame(tick);
+        qrVideo.play().then(() => {
+            // 재생 성공 후 다음 프레임 요청
+            requestAnimationFrame(tick);
+        }).catch(err => {
+            // 재생 실패 시 (예: 권한 문제, 다른 앱 사용 중 등)
+            console.error("비디오 재생 중 오류 발생, 재시작 시도:", err);
+            qrResult.textContent = '카메라 오류 발생. 재시작 중...';
+            // 딜레이를 주어 너무 빠르게 반복 재시작하지 않도록 함
+            setTimeout(startWebcam, 1000); // 1초 후 웹캠 완전히 재시작
+        });
         return; // 현재 프레임에서는 스캔 로직을 건너뜀
     }
 
@@ -166,7 +192,7 @@ function tick() {
             
             // 성공 시 스캔 일시 정지 및 비디오 멈춤
             isScanningPaused = true; 
-            if (qrVideo.srcObject && !qrVideo.paused) { // 이미 멈춰있지 않으면 멈춤
+            if (qrVideo.srcObject && !qrVideo.paused) { 
                 qrVideo.pause(); 
             }
 
@@ -189,7 +215,7 @@ function tick() {
         } else { // 5. QR 코드를 찾지 못했을 경우
             noCodeFoundCount++; 
             if (noCodeFoundCount > 60 && noCodeFoundCount % 60 === 0) { 
-                // 1초마다 메시지 업데이트
+                // 약 1초마다 메시지 업데이트 (60프레임/초 가정)
                 const newMessage = 'QR 코드를 찾을 수 없습니다. 초점/거리 조절 중...';
                 if (qrResult.textContent !== newMessage) {
                     qrResult.textContent = newMessage;
@@ -287,7 +313,7 @@ async function processQRData(data) {
             checkTenStamps(); // 10개 스탬프 체크
         } else {
             // 이미 찍힌 스탬프
-            qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
+            qrResult.textContent = `☑️️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
             console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
         }
     } catch (error) {
