@@ -17,7 +17,7 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn');
+const closeLocationGuideBtn = document = document.getElementById('closeLocationGuideBtn');
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -33,24 +33,24 @@ const VALID_QR_PREFIX = "MY_STAMP_APP:";
 const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A";
 
 // --- 동아리 및 관리자 모드 관련 설정 ---
-const TOTAL_CLASSES = 15; // 총 동아리 개수를 15개로 변경
+const TOTAL_CLASSES = 20; 
 
-// 동아리 이름 매핑 (인덱스 0은 사용하지 않고, 1부터 시작)
 const CLUB_NAMES = [
     "", // 인덱스 0은 비워둠 (QR 코드 번호와 매칭하기 위함)
     "바이오시너지", "네이처", "컴싸", "일취월장", "십시일반",
     "새길", "초아", "그린업", "아트리움", "언로커스",
-    "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth"
+    "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth",
+    "동아리16", "동아리17", "동아리18", "동아리19", "동아리20"
 ];
 
 const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN";
-const MASTER_KEY = "1234"; // 마스터 키는 그대로 유지
+const MASTER_KEY = "1234"; 
 
-// 각 동아리(반)별 관리자 비밀번호 (15개 동아리에 맞춰 조정)
 const CLASS_PASSWORDS = {
     '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
     '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
-    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005"
+    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005",
+    '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010"
 };
 
 let isAdminMode = false;
@@ -69,13 +69,11 @@ function showScreen(screenToShow) {
         if (window.database) {
             database = window.database; 
             isScanningPaused = false; // 메인 화면으로 돌아갈 때 스캔 일시 정지 해제
-            startWebcam();
+            startWebcam(); // 메인 화면 진입 시 웹캠 시작
             loadStampState();
-            checkTenStamps(); // 화면 전환 시 10개 스탬프 상태 및 투표 상태 확인
+            checkTenStamps();
         } else {
             console.error("Firebase Database가 초기화되지 않았습니다. 잠시 후 다시 시도합니다.");
-            alert("앱 초기화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
-            showScreen(splashScreen);
         }
     } else { 
         if (qrVideo.srcObject) {
@@ -97,6 +95,7 @@ async function startWebcam() {
         qrResult.textContent = 'QR 코드를 스캔 중...';
 
         if (typeof jsQR !== 'undefined') {
+            // 웹캠이 시작되면 바로 tick 호출을 스케줄링
             requestAnimationFrame(tick);
         } else {
             console.warn('jsQR 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도합니다.');
@@ -111,10 +110,12 @@ async function startWebcam() {
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
-    if (isAdminMode || isScanningPaused) { // 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔 시도하지 않음
-        return;
+    // 1. 관리자 모드이거나 스캔이 일시 정지된 상태면 즉시 함수 종료
+    if (isAdminMode || isScanningPaused) { 
+        return; 
     }
 
+    // 2. 비디오 데이터가 충분한지 확인
     if (qrVideo.readyState === qrVideo.HAVE_ENOUGH_DATA) {
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
@@ -129,11 +130,11 @@ function tick() {
             inversionAttempts: 'dontInvert', 
         });
 
-        if (code) {
+        if (code) { // 3. QR 코드 스캔 성공
             console.log('QR 코드 스캔 성공:', code.data);
             qrResult.textContent = `스캔 성공: ${code.data}`;
             
-            // QR 코드를 성공적으로 스캔하면 스캔을 일시 정지
+            // 스캔 성공 시, 즉시 스캔을 일시 정지 상태로 전환하고 비디오를 멈춤
             isScanningPaused = true;
             qrVideo.pause(); 
 
@@ -141,26 +142,24 @@ function tick() {
                 isAdminMode = true;
                 alert('관리자 모드에 진입했습니다.');
                 showAdminControls();
+                // 관리자 모드에서는 스캔 재개 setTimeout을 걸지 않음 (수동 종료)
             } else {
                 processQRData(code.data);
-            }
-            
-            // 관리자 모드가 아니면 일정 시간 후 스캔 재개
-            if (!isAdminMode) {
+                // 일반 스캔의 경우, 3초 후 스캔을 재개하도록 예약
                 setTimeout(() => {
                     isScanningPaused = false; // 스캔 일시 정지 해제
-                    qrVideo.play();
+                    qrVideo.play(); // 비디오 다시 재생
                     qrResult.textContent = 'QR 코드를 스캔 중...';
-                    requestAnimationFrame(tick);
+                    requestAnimationFrame(tick); // 다음 프레임 요청하여 스캔 재개
                 }, 3000); // 3초 후에 다시 스캔 시작
             }
 
-        } else {
-            // QR 코드를 찾지 못했을 경우에만 다음 프레임 요청
+        } else { // 4. QR 코드를 찾지 못했을 경우
+            // QR 코드를 찾지 못했으니 다음 프레임에서 다시 스캔 시도
             requestAnimationFrame(tick);
         }
-    } else {
-        // 아직 비디오 데이터가 충분하지 않을 경우 다음 프레임 요청
+    } else { // 5. 아직 비디오 데이터가 충분하지 않을 경우
+        // 비디오 데이터가 준비될 때까지 기다리며 다음 프레임 요청
         requestAnimationFrame(tick);
     }
 }
@@ -172,7 +171,7 @@ async function processQRData(data) {
     if (!data.startsWith(VALID_QR_PREFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다.';
         console.warn('유효하지 않은 QR 코드 스캔', data);
-        return; // 유효하지 않은 QR 코드이므로 함수 종료
+        return; 
     }
 
     let actualData = data.substring(VALID_QR_PREFIX.length);
@@ -180,7 +179,7 @@ async function processQRData(data) {
     if (VALID_SECRET_SUFFIX && !actualData.endsWith(VALID_SECRET_SUFFIX)) {
         qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (보안 키 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 보안 키 불일치', data);
-        return; // 유효하지 않은 QR 코드이므로 함수 종료
+        return; 
     }
     if (VALID_SECRET_SUFFIX) {
         actualData = actualData.substring(0, actualData.length - VALID_SECRET_SUFFIX.length);
@@ -219,8 +218,6 @@ async function processQRData(data) {
                         qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
                         console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
                     }
-                    // 스탬프가 찍히거나 이미 찍혔음을 알린 후에는 추가적인 스캔을 막기 위해 여기서 함수를 종료
-                    // (tick 함수에서 setTimeout으로 다시 스캔을 시작할 것임)
                 } catch (error) {
                     console.error("Firebase 스탬프 처리 중 오류 발생:", error);
                     qrResult.textContent = '❌ 스탬프 처리 중 오류가 발생했습니다.';
@@ -236,7 +233,6 @@ async function processQRData(data) {
     } else {
         qrResult.textContent = '❓ 알 수 없는 QR 코드 형식입니다. (예: "1반" 형식이어야 함)';
     }
-    // processQRData 함수는 여기서 종료되며, 웹캠 재개는 tick 함수 내의 setTimeout이 담당합니다.
 }
 
 // --- 모든 스탬프 초기화 함수 (이제 관리자 모드에서만 사용) ---
@@ -250,16 +246,15 @@ async function resetAllStamps() {
 
         try {
             await remove(ref(database, `stamps/${currentStudentId}`)); 
-            // 학생의 투표 데이터 및 10개 스탬프 달성 상태 초기화
-            await remove(ref(database, `votes/${currentStudentId}`)); // 개별 투표 기록 삭제
-            await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: null }); // 10개 스탬프 달성 상태 초기화
+            await remove(ref(database, `votes/${currentStudentId}`)); 
+            await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: null }); 
 
             stampImages.forEach(stamp => {
                 stamp.classList.add('hidden');
             });
             qrResult.textContent = '모든 스탬프가 초기화되었습니다.';
             console.log('모든 스탬프 초기화 완료.');
-            checkTenStamps(); // 초기화 후 10개 스탬프 상태 다시 확인
+            checkTenStamps(); 
         } catch (error) {
             console.error("Firebase 스탬프 초기화 실패:", error);
             alert("스탬프 초기화에 실패했습니다: " + error.message);
@@ -324,13 +319,11 @@ async function checkTenStamps() {
         if (stampedCount >= 10) {
             tenStampsMessage.classList.remove('hidden');
             
-            // 학생 정보에 '출석인정' 필드 추가/업데이트
             if (studentData && studentData.hasTenStamps !== "출석인정") {
                 await update(studentRef, { hasTenStamps: "출석인정" });
                 console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
             }
 
-            // 투표 여부 확인 (votes 노드 사용)
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             const votedClub = voteSnapshot.val();
 
@@ -347,12 +340,10 @@ async function checkTenStamps() {
             }
         } else {
             tenStampsMessage.classList.add('hidden');
-            // 스탬프 개수가 10개 미만이면 '출석인정' 필드 제거
             if (studentData && studentData.hasTenStamps === "출석인정") {
                 await remove(ref(database, `students/${currentStudentId}/hasTenStamps`));
                 console.log(`학생 ${currentStudentId}의 출석인정 상태가 취소되었습니다.`);
             }
-            // 스탬프 개수가 10개 미만이면 투표 관련 메시지 숨김
             bestClubVoteStatus.textContent = '';
             bestClubInput.value = '';
             bestClubInput.disabled = true;
@@ -376,31 +367,27 @@ submitBestClubBtn.addEventListener('click', async () => {
 
     if (clubName) {
         try {
-            // 학생이 이미 투표했는지 votes 노드에서 확인
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             if (voteSnapshot.exists()) {
                 alert('이미 투표하셨습니다. 투표는 한 번만 가능합니다.');
                 return;
             }
 
-            // 동아리 이름이 CLUB_NAMES 배열에 포함되어 있는지 확인 (유효성 검사)
             if (!CLUB_NAMES.includes(clubName)) {
                 alert('유효하지 않은 동아리 이름입니다. 정확한 이름을 입력해주세요.');
                 return;
             }
 
             if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
-                // 개별 학생의 투표 기록 저장
                 await set(ref(database, `votes/${currentStudentId}`), clubName);
                 
-                // 동아리 총 투표 수 증가 트랜잭션
                 const clubVotesRef = ref(database, `clubVotes/${clubName}`);
                 await runTransaction(clubVotesRef, (currentVotes) => {
                     return (currentVotes || 0) + 1;
                 });
 
                 alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
-                checkTenStamps(); // UI 업데이트를 위해 다시 호출 (투표 완료 메시지 및 버튼 비활성화)
+                checkTenStamps(); 
             }
         } catch (error) {
             console.error("Firebase 투표 저장 실패:", error);
@@ -417,9 +404,9 @@ submitBestClubBtn.addEventListener('click', async () => {
 function showAdminControls() {
     controlsDiv.innerHTML = '';
 
-    for (let i = 1; i <= TOTAL_CLASSES; i++) { // 15개 동아리 버튼 생성
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { 
         const classButton = document.createElement('button');
-        classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; // 동아리 이름 사용
+        classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; 
         classButton.classList.add('class-control-button');
         classButton.dataset.class = i;
         classButton.addEventListener('click', handleClassStampControl);
@@ -459,10 +446,8 @@ function showMasterControls() {
 
 async function handleClassStampControl(event) {
     const classNumber = event.target.dataset.class;
-    const password = prompt(`${CLUB_NAMES[classNumber]} 비밀번호를 입력하세요:`); // 동아리 이름 사용
+    const password = prompt(`${CLUB_NAMES[classNumber]} 비밀번호를 입력하세요:`); 
 
-    // 마스터 키는 10번 동아리(언로커스)에 연결되어 있다고 가정합니다.
-    // 만약 마스터 키를 다른 동아리 번호에 연결하고 싶다면 이 부분을 수정하세요.
     if (classNumber === '10' && password === MASTER_KEY) { 
         showMasterControls();
         return;
@@ -472,7 +457,7 @@ async function handleClassStampControl(event) {
         const stampIndex = classNumber - 1;
         const currentStamp = stampImages[stampIndex];
         const currentStudentId = localStorage.getItem('currentStudentId');
-        const clubName = CLUB_NAMES[classNumber]; // 동아리 이름 가져오기
+        const clubName = CLUB_NAMES[classNumber]; 
 
         if (!currentStudentId || !database) {
             alert('학생 정보가 없거나 데이터베이스 연결이 불안정합니다. 스탬프를 제어할 수 없습니다.');
@@ -487,18 +472,18 @@ async function handleClassStampControl(event) {
                 if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
                     await set(ref(database, stampPath), true);
                     currentStamp.classList.remove('hidden');
-                    qrResult.textContent = `✅ ${clubName} 스탬프가 관리자에 의해 찍혔습니다!`; // 동아리 이름 사용
+                    qrResult.textContent = `✅ ${clubName} 스탬프가 관리자에 의해 찍혔습니다!`; 
                     alert(`${clubName} 스탬프가 찍혔습니다.`);
                     console.log(`${clubName} 스탬프 관리자 찍기 완료.`);
-                    checkTenStamps(); // 관리자 모드에서 찍을 때도 10개 달성 여부 확인
+                    checkTenStamps(); 
                 } else { 
-                    if (confirm(`${clubName} 스탬프를 취소하시겠습니까?`)) { // 동아리 이름 사용
+                    if (confirm(`${clubName} 스탬프를 취소하시겠습니까?`)) { 
                         await remove(ref(database, stampPath));
                         currentStamp.classList.add('hidden');
-                        qrResult.textContent = `❌ ${clubName} 스탬프가 관리자에 의해 취소되었습니다.`; // 동아리 이름 사용
+                        qrResult.textContent = `❌ ${clubName} 스탬프가 관리자에 의해 취소되었습니다.`; 
                         alert(`${clubName} 스탬프가 취소되었습니다.`);
                         console.log(`${clubName} 스탬프 관리자 취소 완료.`);
-                        checkTenStamps(); // 관리자 모드에서 취소할 때도 10개 달성 여부 확인
+                        checkTenStamps(); 
                     }
                 }
             }
@@ -521,7 +506,7 @@ async function fillAllStamps() {
 
         try {
             const updates = {};
-            for (let i = 1; i <= TOTAL_CLASSES; i++) { // 15개 동아리 모두 채우기
+            for (let i = 1; i <= TOTAL_CLASSES; i++) { 
                 updates[`club${i}`] = true;
             }
             await update(ref(database, `stamps/${currentStudentId}`), updates);
@@ -531,7 +516,7 @@ async function fillAllStamps() {
             });
             qrResult.textContent = '모든 스탬프가 채워졌습니다.';
             console.log('모든 스탬프 채우기 완료.');
-            checkTenStamps(); // 모든 스탬프 채운 후 10개 달성 여부 확인
+            checkTenStamps(); 
         } catch (error) {
             console.error("Firebase 모든 스탬프 채우기 실패:", error);
             alert("모든 스탬프 채우기에 실패했습니다: " + error.message);
@@ -556,7 +541,6 @@ function exitAdminMode() {
 
 // --- 이벤트 리스너 연결 ---
 submitInfoBtn.addEventListener('click', async () => {
-    // 학년, 반, 번호를 두 자리 숫자로 패딩합니다.
     const grade = gradeInput.value.padStart(2, '0');
     const classNum = classInput.value.padStart(2, '0');
     const number = numberInput.value.padStart(2, '0');
@@ -566,15 +550,13 @@ submitInfoBtn.addEventListener('click', async () => {
         const studentId = `${grade}-${classNum}-${number}`; 
 
         try {
-            // 학생 정보 저장 시 hasTenStamps와 votes 필드도 초기화
             await set(ref(database, `students/${studentId}`), {
                 grade: grade,
                 classNum: classNum,
                 number: number,
                 name: name,
-                hasTenStamps: null // 초기화
+                hasTenStamps: null 
             });
-            // votes 노드도 초기화 (만약 이전에 데이터가 남아있을 경우)
             await remove(ref(database, `votes/${studentId}`));
 
             localStorage.setItem('currentStudentId', studentId); 
@@ -604,7 +586,7 @@ window.addEventListener('load', async () => {
         database = window.database; 
     } else {
         console.error("Firebase Database 인스턴스를 찾을 수 없습니다. 앱 초기화 지연.");
-        alert("앱 초기화 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+        alert("앱 초기화 중 오류가 발생했습니다. index.html에서 Firebase 설정 및 초기화를 확인해주세요.");
         return; 
     }
 
@@ -615,7 +597,6 @@ window.addEventListener('load', async () => {
             const snapshot = await get(ref(database, `students/${currentStudentId}`));
             const studentData = snapshot.val();
             if (studentData) {
-                // 저장된 학번이 이미 패딩된 형태라고 가정하고 표시합니다.
                 studentDisplay.textContent = `학번: ${studentData.grade}학년 ${studentData.classNum}반 ${studentData.number}번 | 이름: ${studentData.name}`;
                 showScreen(mainContentScreen);
             } else {
