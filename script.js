@@ -17,7 +17,7 @@ const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 const stampImages = document.querySelectorAll('.stamps-grid .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); // <<< 이전 TypeError 수정됨
+const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); 
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -26,7 +26,7 @@ const submitBestClubBtn = document.getElementById('submitBestClubBtn');
 const bestClubVoteStatus = document.getElementById('bestClubVoteStatus');
 
 // --- Firebase Database 인스턴스 ---
-let database; // index.html에서 window.database로 초기화될 것임
+let database; 
 
 // --- QR 코드 유효성 검사를 위한 비밀 값들 ---
 const VALID_QR_PREFIX = "MY_STAMP_APP:";
@@ -36,7 +36,7 @@ const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A";
 const TOTAL_CLASSES = 20; 
 
 const CLUB_NAMES = [
-    "", // 인덱스 0은 비워둠 (QR 코드 번호와 매칭하기 위함)
+    "", 
     "바이오시너지", "네이처", "컴싸", "일취월장", "십시일반",
     "새길", "초아", "그린업", "아트리움", "언로커스",
     "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth",
@@ -90,13 +90,20 @@ function showScreen(screenToShow) {
 
 // --- 웹캠 시작 함수 ---
 async function startWebcam() {
+    if (qrVideo.srcObject) { // 기존 스트림이 있다면 중지하고 초기화
+        qrVideo.srcObject.getTracks().forEach(track => track.stop());
+        qrVideo.srcObject = null;
+    }
+
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
         qrVideo.srcObject = stream;
-        qrVideo.setAttribute('playsinline', true);
-        qrVideo.play();
+        qrVideo.setAttribute('playsinline', true); 
+        qrVideo.play(); 
 
         qrResult.textContent = 'QR 코드를 스캔 중...';
+        isScanningPaused = false; // 웹캠 시작 시 스캔 가능 상태로 설정
+        noCodeFoundCount = 0; 
 
         if (typeof jsQR !== 'undefined') {
             requestAnimationFrame(tick);
@@ -108,21 +115,22 @@ async function startWebcam() {
     } catch (err) {
         console.error('웹캠 접근 오류:', err);
         qrResult.textContent = '웹캠을 시작할 수 없습니다. 카메라 권한을 확인해주세요.';
+        alert('웹캠 접근 오류! 카메라 권한을 허용해주세요.'); 
     }
 }
 
 // --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) ---
 function tick() {
-    // 1. 관리자 모드이거나 스캔이 일시 정지된 상태면 즉시 함수 종료
-    if (isAdminMode || isScanningPaused) { 
-        if (qrVideo.srcObject && qrVideo.paused === false) {
+    // 1. 스캔이 일시 정지된 상태이거나 관리자 모드이면 스캔 중지
+    if (isScanningPaused || isAdminMode) { 
+        if (qrVideo.srcObject && !qrVideo.paused) {
             qrVideo.pause();
         }
         return; 
     }
 
-    // 비디오가 재생 중이 아니라면 다시 재생 시도
-    if (qrVideo.srcObject && qrVideo.paused === true) {
+    // 비디오가 재생 중이 아니라면 다시 재생 시도 (가끔 멈출 수 있음)
+    if (qrVideo.srcObject && qrVideo.paused) {
         qrVideo.play();
     }
 
@@ -157,34 +165,34 @@ function tick() {
             } else {
                 processQRData(code.data);
                 setTimeout(() => {
-                    isScanningPaused = false;
-                    qrVideo.play();
+                    isScanningPaused = false; 
+                    qrVideo.play(); 
                     qrResult.textContent = 'QR 코드를 스캔 중...'; 
                     requestAnimationFrame(tick);
-                }, 3000);
+                }, 3000); 
             }
 
         } else { // 4. QR 코드를 찾지 못했을 경우
             noCodeFoundCount++; 
             if (noCodeFoundCount > 60 && noCodeFoundCount % 60 === 0) { 
-                const newMessage = 'QR 코드를 찾을 수 없습니다. 다시 시도 중...';
+                const newMessage = 'QR 코드를 찾을 수 없습니다. 초점/거리 조절 중...';
                 if (qrResult.textContent !== newMessage) {
                     qrResult.textContent = newMessage;
                 }
             } else if (noCodeFoundCount === 1) { 
                 qrResult.textContent = 'QR 코드를 스캔 중...';
             }
-            requestAnimationFrame(tick);
+            requestAnimationFrame(tick); 
         }
-    } else { // 5. 아직 비디오 데이터가 충분하지 않을 경우
+    } else { // 5. 아직 비디오 데이터가 충분하지 않을 경우 (카메라 준비 중)
         noCodeFoundCount++; 
-        if (noCodeFoundCount % 60 === 0) {
-            const newMessage = 'QR 코드 스캔 중... (카메라 준비 또는 인식 대기)';
+        if (noCodeFoundCount % 60 === 0) { 
+            const newMessage = '카메라 준비 중...';
             if (qrResult.textContent !== newMessage) {
                 qrResult.textContent = newMessage;
             }
         }
-        requestAnimationFrame(tick);
+        requestAnimationFrame(tick); 
     }
 }
 
@@ -193,15 +201,15 @@ async function processQRData(data) {
     console.log("스캔된 원본 QR 데이터:", data);
 
     if (!data.startsWith(VALID_QR_PREFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다.';
-        console.warn('유효하지 않은 QR 코드 스캔', data);
+        qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다. (접두사 불일치)';
+        console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
         return; 
     }
 
     let actualData = data.substring(VALID_QR_PREFIX.length);
 
     if (VALID_SECRET_SUFFIX && !actualData.endsWith(VALID_SECRET_SUFFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 스탬프 QR 코드입니다. (보안 키 불일치)';
+        qrResult.textContent = '❌ 유효하지 않은 QR 코드입니다. (보안 키 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 보안 키 불일치', data);
         return; 
     }
@@ -211,55 +219,60 @@ async function processQRData(data) {
     
     console.log("처리할 실제 데이터:", actualData);
 
-    const classNumberMatch = actualData.match(/(\d+)반/);
+    const classNumberMatch = actualData.match(/^(\d+)반$/); 
 
-    if (classNumberMatch && classNumberMatch[1]) {
-        const clubId = parseInt(classNumberMatch[1]); 
-
-        if (clubId >= 1 && clubId <= TOTAL_CLASSES) {
-            const stampIndex = clubId - 1; 
-            const clubName = CLUB_NAMES[clubId]; 
-
-            if (stampImages[stampIndex]) {
-                const currentStudentId = localStorage.getItem('currentStudentId');
-                if (!currentStudentId) {
-                    qrResult.textContent = '로그인 정보가 없습니다. 다시 시작해주세요.';
-                    alert('학생 정보를 먼저 입력해주세요.');
-                    return;
-                }
-
-                try {
-                    const stampPath = `stamps/${currentStudentId}/club${clubId}`;
-                    const stampSnapshot = await get(ref(database, stampPath)); 
-
-                    if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
-                        await set(ref(database, stampPath), true); 
-                        stampImages[stampIndex].classList.remove('hidden');
-                        qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; 
-                        console.log(`${clubName} 스탬프가 찍혔습니다.`);
-                        checkTenStamps(); 
-                    } else {
-                        qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
-                        console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
-                    }
-                } catch (error) {
-                    console.error("Firebase 스탬프 처리 중 오류 발생:", error);
-                    qrResult.textContent = '❌ 스탬프 처리 중 오류가 발생했습니다.';
-                    alert('스탬프 처리 중 오류 발생: ' + error.message);
-                }
-
-            } else {
-                qrResult.textContent = '스탬프 요소를 찾을 수 없습니다. (HTML 구조 확인)';
-            }
-        } else {
-            qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
-        }
-    } else {
+    if (!classNumberMatch || !classNumberMatch[1]) {
         qrResult.textContent = '❓ 알 수 없는 QR 코드 형식입니다. (예: "1반" 형식이어야 함)';
+        console.warn('알 수 없는 QR 코드 형식:', actualData);
+        return;
+    }
+
+    const clubId = parseInt(classNumberMatch[1]); 
+
+    if (clubId < 1 || clubId > TOTAL_CLASSES) {
+        qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
+        console.warn('유효하지 않은 동아리 번호:', clubId);
+        return;
+    }
+
+    const stampIndex = clubId - 1; 
+    const clubName = CLUB_NAMES[clubId]; 
+
+    if (!stampImages[stampIndex]) {
+        qrResult.textContent = '내부 오류: 스탬프 요소를 찾을 수 없습니다.';
+        console.error('스탬프 요소를 찾을 수 없음:', stampIndex);
+        return;
+    }
+
+    const currentStudentId = localStorage.getItem('currentStudentId');
+    if (!currentStudentId) {
+        qrResult.textContent = '로그인 정보가 없습니다. 다시 시작해주세요.';
+        alert('학생 정보를 먼저 입력해주세요.');
+        return;
+    }
+
+    try {
+        const stampPath = `stamps/${currentStudentId}/club${clubId}`;
+        const stampSnapshot = await get(ref(database, stampPath)); 
+
+        if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
+            await set(ref(database, stampPath), true); 
+            stampImages[stampIndex].classList.remove('hidden');
+            qrResult.textContent = `✅ ${clubName} 스탬프가 찍혔습니다!`; 
+            console.log(`${clubName} 스탬프가 찍혔습니다.`);
+            checkTenStamps(); 
+        } else {
+            qrResult.textContent = `☑️ ${clubName} 스탬프는 이미 찍혔습니다.`; 
+            console.log(`${clubName} 스탬프는 이미 찍혔습니다.`);
+        }
+    } catch (error) {
+        console.error("Firebase 스탬프 처리 중 오류 발생:", error);
+        qrResult.textContent = '❌ 스탬프 처리 중 오류가 발생했습니다.';
+        alert('스탬프 처리 중 오류 발생: ' + error.message);
     }
 }
 
-// --- 모든 스탬프 초기화 함수 (이제 관리자 모드에서만 사용) ---
+// --- 모든 스탬프 초기화 함수 (관리자 모드에서만 사용) ---
 async function resetAllStamps() {
     if (confirm('경고: 모든 스탬프를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
         const currentStudentId = localStorage.getItem('currentStudentId');
@@ -423,10 +436,13 @@ submitBestClubBtn.addEventListener('click', async () => {
 });
 
 
-// --- 관리자 모드 관련 함수들 ---
+// --- 관리자 모드 관련 함수 ---
 
 function showAdminControls() {
-    controlsDiv.innerHTML = '';
+    isAdminMode = true; 
+    isScanningPaused = true; 
+
+    controlsDiv.innerHTML = ''; 
 
     for (let i = 1; i <= TOTAL_CLASSES; i++) { 
         const classButton = document.createElement('button');
@@ -443,11 +459,15 @@ function showAdminControls() {
     controlsDiv.appendChild(exitAdminButton);
 
     qrResult.textContent = '관리자 모드: 원하는 동아리를 선택하세요.';
-    qrVideo.pause();
+    if (qrVideo.srcObject && !qrVideo.paused) { 
+        qrVideo.pause(); 
+    }
 }
 
 function showMasterControls() {
     isMasterMode = true;
+    isAdminMode = true; 
+    isScanningPaused = true; 
     controlsDiv.innerHTML = '';
 
     qrResult.textContent = 'MASTER KEY 활성화: 모든 스탬프를 제어할 수 있습니다.';
@@ -466,6 +486,10 @@ function showMasterControls() {
     exitMasterButton.textContent = '마스터 모드 종료';
     exitMasterButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitMasterButton);
+
+    if (qrVideo.srcObject && !qrVideo.paused) {
+        qrVideo.pause(); 
+    }
 }
 
 async function handleClassStampControl(event) {
@@ -558,7 +582,9 @@ function exitAdminMode() {
     loadStampState(); 
     qrResult.textContent = '관리자 모드를 종료했습니다. QR 코드를 스캔 중...';
     console.log('관리자 모드 종료.');
-    qrVideo.play();
+    if (qrVideo.srcObject && qrVideo.paused) { // 비디오가 멈춰있었다면 다시 재생
+        qrVideo.play();
+    }
     requestAnimationFrame(tick);
 }
 
