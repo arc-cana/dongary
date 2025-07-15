@@ -1,5 +1,9 @@
 // Firebase Realtime Database 모듈 임포트
-import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// firebase-app.js에서는 initializeApp만 가져오고,
+// firebase-database.js에서 getDatabase, ref, set, get, update, remove, runTransaction을 가져와야 합니다.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
 
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const splashScreen = document.getElementById('splash-screen');
@@ -17,7 +21,7 @@ const studentDisplay = document.getElementById('student-display');
 const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
 // stampImages 변수도 이제 .stamp-item 내부의 .stamp를 참조하도록 선택자를 변경합니다.
-const stampImages = document.querySelectorAll('.stamps-grid .stamp-item .stamp'); // <-- 수정됨
+const stampImages = document.querySelectorAll('.stamps-grid .stamp-item .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
 const showHowToPlayBtn = document.getElementById('showHowToPlayBtn'); 
 const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); 
@@ -37,7 +41,7 @@ const VALID_QR_PREFIX = "MY_STAMP_APP:";
 const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A";
 
 // --- 동아리 및 관리자 모드 관련 설정 ---
-const TOTAL_CLASSES = 15; // <-- 20에서 15로 수정
+const TOTAL_CLASSES = 15; // 20에서 15로 수정
 
 const CLUB_NAMES = [
     "", 
@@ -54,7 +58,6 @@ const CLASS_PASSWORDS = {
     '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
     '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
     '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005"
-    // '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010" // <-- 제거됨
 };
 
 let isAdminMode = false;
@@ -280,7 +283,7 @@ async function processQRData(data) {
     const clubId = parseInt(classNumberMatch[1]); 
 
     // 4. 동아리 번호 범위 검사
-    if (clubId < 1 || clubId > TOTAL_CLASSES) { // <-- TOTAL_CLASSES 사용
+    if (clubId < 1 || clubId > TOTAL_CLASSES) {
         qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
         console.warn('유효하지 않은 동아리 번호:', clubId);
         return;
@@ -372,7 +375,7 @@ async function loadStampState() {
         const studentStamps = snapshot.val();
 
         if (studentStamps) {
-            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
+            for (let i = 1; i <= TOTAL_CLASSES; i++) {
                 if (studentStamps[`club${i}`]) { 
                     const stampIndex = i - 1;
                     if (stampImages[stampIndex]) {
@@ -400,7 +403,7 @@ async function checkTenStamps() {
         const studentStamps = stampsSnapshot.val();
         let stampedCount = 0;
         if (studentStamps) {
-            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
+            for (let i = 1; i <= TOTAL_CLASSES; i++) {
                 if (studentStamps[`club${i}`]) {
                     stampedCount++;
                 }
@@ -514,7 +517,7 @@ function showAdminControls() {
     controlsDiv.innerHTML = ''; // 기존 버튼 모두 제거
 
     // 각 동아리별 스탬프 제어 버튼 생성
-    for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
+    for (let i = 1; i <= TOTAL_CLASSES; i++) {
         const classButton = document.createElement('button');
         classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; 
         classButton.classList.add('class-control-button');
@@ -634,7 +637,7 @@ async function fillAllStamps() {
 
         try {
             const updates = {};
-            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
+            for (let i = 1; i <= TOTAL_CLASSES; i++) {
                 updates[`club${i}`] = true;
             }
             await update(ref(database, `stamps/${currentStudentId}`), updates);
