@@ -1,11 +1,11 @@
 // Firebase Realtime Database 모듈 임포트
-import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
 const splashScreen = document.getElementById('splash-screen');
 const mainContentScreen = document.getElementById('main-content');
 const locationGuideScreen = document.getElementById('location-guide-screen');
-const howToPlayScreen = document.getElementById('how-to-play-screen'); // <-- 새로 추가
+const howToPlayScreen = document.getElementById('how-to-play-screen'); 
 
 const gradeInput = document.getElementById('gradeInput');
 const classInput = document.getElementById('classInput');
@@ -16,11 +16,12 @@ const studentDisplay = document.getElementById('student-display');
 
 const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
-const stampImages = document.querySelectorAll('.stamps-grid .stamp');
+// stampImages 변수도 이제 .stamp-item 내부의 .stamp를 참조하도록 선택자를 변경합니다.
+const stampImages = document.querySelectorAll('.stamps-grid .stamp-item .stamp'); // <-- 수정됨
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
-const showHowToPlayBtn = document.getElementById('showHowToPlayBtn'); // <-- 새로 추가
+const showHowToPlayBtn = document.getElementById('showHowToPlayBtn'); 
 const closeLocationGuideBtn = document.getElementById('closeLocationGuideBtn'); 
-const closeHowToPlayBtn = document.getElementById('closeHowToPlayBtn'); // <-- 새로 추가
+const closeHowToPlayBtn = document.getElementById('closeHowToPlayBtn'); 
 
 const controlsDiv = document.querySelector('.controls');
 const tenStampsMessage = document.getElementById('ten-stamps-message');
@@ -36,14 +37,14 @@ const VALID_QR_PREFIX = "MY_STAMP_APP:";
 const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A";
 
 // --- 동아리 및 관리자 모드 관련 설정 ---
-const TOTAL_CLASSES = 20; 
+const TOTAL_CLASSES = 15; // <-- 20에서 15로 수정
 
 const CLUB_NAMES = [
     "", 
     "바이오시너지", "네이처", "컴싸", "일취월장", "십시일반",
     "새길", "초아", "그린업", "아트리움", "언로커스",
-    "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth",
-    "동아리16", "동아리17", "동아리18", "동아리19", "동아리20"
+    "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth"
+    // 동아리16 ~ 동아리20 제거됨
 ];
 
 const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN";
@@ -52,8 +53,8 @@ const MASTER_KEY = "1234";
 const CLASS_PASSWORDS = {
     '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
     '6': "6666", '7': "7777", '8': "8888", '9': "9999", '10': "0000",
-    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005",
-    '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010"
+    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005"
+    // '16': "0006", '17': "0007", '18': "0008", '19': "0009", '20': "0010" // <-- 제거됨
 };
 
 let isAdminMode = false;
@@ -69,7 +70,7 @@ function showScreen(screenToShow) {
     splashScreen.classList.add('hidden');
     mainContentScreen.classList.add('hidden');
     locationGuideScreen.classList.add('hidden');
-    howToPlayScreen.classList.add('hidden'); // <-- 새로 추가
+    howToPlayScreen.classList.add('hidden'); 
 
     screenToShow.classList.remove('hidden');
 
@@ -279,7 +280,7 @@ async function processQRData(data) {
     const clubId = parseInt(classNumberMatch[1]); 
 
     // 4. 동아리 번호 범위 검사
-    if (clubId < 1 || clubId > TOTAL_CLASSES) {
+    if (clubId < 1 || clubId > TOTAL_CLASSES) { // <-- TOTAL_CLASSES 사용
         qrResult.textContent = `⛔ 유효하지 않은 동아리 번호입니다. (1~${TOTAL_CLASSES}번만 가능)`; 
         console.warn('유효하지 않은 동아리 번호:', clubId);
         return;
@@ -371,7 +372,7 @@ async function loadStampState() {
         const studentStamps = snapshot.val();
 
         if (studentStamps) {
-            for (let i = 1; i <= TOTAL_CLASSES; i++) {
+            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
                 if (studentStamps[`club${i}`]) { 
                     const stampIndex = i - 1;
                     if (stampImages[stampIndex]) {
@@ -399,7 +400,7 @@ async function checkTenStamps() {
         const studentStamps = stampsSnapshot.val();
         let stampedCount = 0;
         if (studentStamps) {
-            for (let i = 1; i <= TOTAL_CLASSES; i++) {
+            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
                 if (studentStamps[`club${i}`]) {
                     stampedCount++;
                 }
@@ -473,7 +474,9 @@ submitBestClubBtn.addEventListener('click', async () => {
             }
 
             // 유효한 동아리 이름인지 확인
-            if (!CLUB_NAMES.includes(clubName)) {
+            // 투표 가능한 동아리 이름은 TOTAL_CLASSES까지이므로 CLUB_NAMES의 첫 요소를 제외하고 검사
+            const validClubNamesForVote = CLUB_NAMES.slice(1, TOTAL_CLASSES + 1); // 1번부터 TOTAL_CLASSES번까지
+            if (!validClubNamesForVote.includes(clubName)) {
                 alert('유효하지 않은 동아리 이름입니다. 정확한 이름을 입력해주세요.');
                 return;
             }
@@ -511,7 +514,7 @@ function showAdminControls() {
     controlsDiv.innerHTML = ''; // 기존 버튼 모두 제거
 
     // 각 동아리별 스탬프 제어 버튼 생성
-    for (let i = 1; i <= TOTAL_CLASSES; i++) { 
+    for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
         const classButton = document.createElement('button');
         classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; 
         classButton.classList.add('class-control-button');
@@ -574,7 +577,7 @@ async function handleClassStampControl(event) {
 
     if (password === CLASS_PASSWORDS[classNumber]) {
         const stampIndex = classNumber - 1;
-        const currentStamp = stampImages[stampIndex];
+        const currentStamp = stampImages[stampIndex]; // 이미지는 stampImages에서 가져옴
         const currentStudentId = localStorage.getItem('currentStudentId');
         const clubName = CLUB_NAMES[classNumber]; 
 
@@ -587,7 +590,7 @@ async function handleClassStampControl(event) {
             const stampPath = `stamps/${currentStudentId}/club${classNumber}`;
             const stampSnapshot = await get(ref(database, stampPath));
 
-            if (currentStamp) {
+            if (currentStamp) { // currentStamp가 존재하는지 확인
                 if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
                     // 스탬프가 찍히지 않았다면 새로 찍음
                     await set(ref(database, stampPath), true);
@@ -607,6 +610,9 @@ async function handleClassStampControl(event) {
                         checkTenStamps(); 
                     }
                 }
+            } else {
+                console.warn(`클래스 ${classNumber}에 해당하는 스탬프 이미지 요소를 찾을 수 없습니다.`);
+                alert(`오류: ${clubName} 스탬프 요소를 찾을 수 없습니다.`);
             }
         } catch (error) {
             console.error("Firebase 관리자 스탬프 제어 실패:", error);
@@ -628,7 +634,7 @@ async function fillAllStamps() {
 
         try {
             const updates = {};
-            for (let i = 1; i <= TOTAL_CLASSES; i++) { 
+            for (let i = 1; i <= TOTAL_CLASSES; i++) { // <-- TOTAL_CLASSES 사용
                 updates[`club${i}`] = true;
             }
             await update(ref(database, `stamps/${currentStudentId}`), updates);
@@ -704,8 +710,8 @@ showLocationGuideBtn.addEventListener('click', () => {
 });
 
 // 새로 추가된 진행 방법 안내 버튼 이벤트 리스너
-showHowToPlayBtn.addEventListener('click', () => { // <-- 새로 추가
-    showScreen(howToPlayScreen); // <-- 새로 추가
+showHowToPlayBtn.addEventListener('click', () => { 
+    showScreen(howToPlayScreen); 
 });
 
 closeLocationGuideBtn.addEventListener('click', () => {
@@ -713,8 +719,8 @@ closeLocationGuideBtn.addEventListener('click', () => {
 });
 
 // 새로 추가된 진행 방법 안내 화면 닫기 버튼 이벤트 리스너
-closeHowToPlayBtn.addEventListener('click', () => { // <-- 새로 추가
-    showScreen(mainContentScreen); // <-- 새로 추가
+closeHowToPlayBtn.addEventListener('click', () => { 
+    showScreen(mainContentScreen); 
 });
 
 
