@@ -1,8 +1,38 @@
 // Firebase Realtime Database 모듈 임포트
-// firebase-app.js에서는 initializeApp만 가져오고,
-// firebase-database.js에서 getDatabase, ref, set, get, update, remove, runTransaction을 가져와야 합니다.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, set, get, update, remove, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// Firebase 연결을 '끌'지 '킬'지 결정하는 변수 (개발용)
+// 이 값을 false로 바꾸면 Firebase 연결을 시도하지 않습니다.
+// Realtime Database 사용을 중지하고 싶다면 이 값을 false로 설정하세요.
+const ENABLE_FIREBASE_CONNECTION = false; 
+
+// Firebase 설정은 script.js 내부로 이동
+const firebaseConfig = {
+    apiKey: "AIzaSyC419ExHmhVeUgZZ8OczKs0-wxjRe9r98A",
+    authDomain: "qr-presentation.firebaseapp.com",
+    projectId: "qr-presentation",
+    databaseURL: "https://qr-presentation-default-rtdb.firebaseio.com/", 
+    storageBucket: "qr-presentation.firebasestorage.app",
+    messagingSenderId: "798088889839",
+    appId: "1:798088889839:web:680bdd77ab61bb99a0e21a",
+    measurementId: "G-PV8FER69EM" 
+};
+
+let app; // app 변수를 여기에 선언
+let database; // database 변수를 여기에 선언
+
+// ENABLE_FIREBASE_CONNECTION 값에 따라 Firebase를 초기화합니다.
+if (ENABLE_FIREBASE_CONNECTION) {
+    app = initializeApp(firebaseConfig);
+    database = getDatabase(app); 
+    console.log("Firebase 앱 및 Realtime Database 초기화 완료.");
+} else {
+    console.warn("Firebase 연결이 비활성화되었습니다.");
+    // database 변수를 null 등으로 설정하여 사용하지 않음을 명시
+    database = null; 
+    app = null;
+}
 
 
 // HTML 요소들을 JavaScript에서 사용하기 위해 가져옵니다.
@@ -20,7 +50,6 @@ const studentDisplay = document.getElementById('student-display');
 
 const qrVideo = document.getElementById('qr-video');
 const qrResult = document.getElementById('qr-result');
-// stampImages 변수도 이제 .stamp-item 내부의 .stamp를 참조하도록 선택자를 변경합니다.
 const stampImages = document.querySelectorAll('.stamps-grid .stamp-item .stamp');
 const showLocationGuideBtn = document.getElementById('showLocationGuideBtn');
 const showHowToPlayBtn = document.getElementById('showHowToPlayBtn'); 
@@ -33,66 +62,27 @@ const bestClubInput = document.getElementById('bestClubInput');
 const submitBestClubBtn = document.getElementById('submitBestClubBtn');
 const bestClubVoteStatus = document.getElementById('bestClubVoteStatus');
 
-// --- Firebase Database 인스턴스 ---
-let database; 
-
-// --- 개발/디버깅을 위한 Firebase 연결 활성화/비활성화 플래그 ---
-// 이 값을 false로 바꾸면 Firebase 초기화 및 연결을 시도하지 않습니다.
-const ENABLE_FIREBASE_CONNECTION = false; 
-
-// --- Firebase 설정 (반드시 YOUR_API_KEY 등으로 변경하세요!) ---
-// 이 부분은 실제 Firebase 프로젝트 설정으로 채워져야 합니다.
-const firebaseConfig = {
-    apiKey: "AIzaSyC419ExHmhVeUgZZ8OczKs0-wxjRe9r98A",
-    authDomain: "qr-presentation.firebaseapp.com",
-    projectId: "qr-presentation",
-    databaseURL: "https://qr-presentation-default-rtdb.firebaseio.com/", 
-    storageBucket: "qr-presentation.firebasestorage.app",
-    messagingSenderId: "798088889839",
-    appId: "1:798088889839:web:680bdd77ab61bb99a0e21a",
-    measurementId: "G-PV8FER69EM" 
-};
-
-// --- Firebase 초기화 ---
-if (ENABLE_FIREBASE_CONNECTION) {
-    try {
-        const app = initializeApp(firebaseConfig);
-        database = getDatabase(app); 
-        window.database = database; // 다른 스크립트나 전역에서 접근할 경우를 대비 (선택 사항)
-        console.log("Firebase 앱 및 Realtime Database 초기화 완료.");
-    } catch (error) {
-        console.error("Firebase 초기화 중 오류 발생:", error);
-        alert("Firebase 초기화에 실패했습니다. 네트워크 연결 또는 설정값을 확인해주세요.");
-        database = null; // 오류 발생 시 database를 null로 설정
-    }
-} else {
-    console.warn("개발자 설정에 따라 Firebase 연결이 비활성화되었습니다.");
-    database = null; // Firebase 사용 안 할 경우 database를 null로 설정
-    window.database = null;
-}
-
 // --- QR 코드 유효성 검사를 위한 비밀 값들 ---
 const VALID_QR_PREFIX = "MY_STAMP_APP:";
 const VALID_SECRET_SUFFIX = ":SCHOOL_SECRET_KEY_A";
 
 // --- 동아리 및 관리자 모드 관련 설정 ---
-const TOTAL_CLASSES = 15; // 20에서 15로 수정
+const TOTAL_CLASSES = 15; 
 
 const CLUB_NAMES = [
     "", 
     "바이오시너지", "네이처", "컴싸", "일취월장", "십시일반",
     "새길", "초아", "그린업", "아트리움", "언로커스",
     "공자", "로직", "사회과학융합탐구", "플라이 어웨이", "specialbooth"
-    // 동아리16 ~ 동아리20 제거됨
 ];
 
 const ADMIN_QR_CODE_DATA = "ADMIN_QR_APP:ACTIVATE_ADMIN";
-const MASTER_KEY = "8621"; 
+const MASTER_KEY = "1234"; 
 
 const CLASS_PASSWORDS = {
-    '1': "1720", '2': "2489", '3': "3549", '4': "4663", '5': "5278",
-    '6': "6091", '7': "7367", '8': "8691", '9': "9187", '10': "0267",
-    '11': "1419", '12': "2167", '13': "4987", '14': "3382", '15': "8277"
+    '1': "1111", '2': "2222", '3': "3333", '4': "4444", '5': "5555",
+    '6': "6666", '7': "7777", '8': "7777", '9': "9999", '10': "0000",
+    '11': "0001", '12': "0002", '13': "0003", '14': "0004", '15': "0005"
 };
 
 let isAdminMode = false;
@@ -113,16 +103,15 @@ function showScreen(screenToShow) {
     screenToShow.classList.remove('hidden');
 
     if (screenToShow === mainContentScreen) {
-        // Firebase가 비활성화된 경우, 데이터베이스 관련 기능은 작동하지 않음
-        if (database) { // database 인스턴스가 유효한 경우에만 실행
+        // Firebase 연결이 활성화되어 있을 때만 웹캠 시작 및 데이터 로드
+        if (ENABLE_FIREBASE_CONNECTION && database) {
             isScanningPaused = false; 
             startWebcam(); // 메인 화면 진입 시 웹캠 시작
             loadStampState();
             checkTenStamps();
         } else {
-            console.warn("Firebase Database가 비활성화되어, 일부 기능이 제한됩니다.");
-            qrResult.textContent = 'Firebase 비활성화 모드. QR 스캔 불가.';
-            // Firebase 없이도 동작할 수 있는 부분은 여기에서 처리
+            console.warn("Firebase 연결이 비활성화되어 데이터 로드 및 웹캠이 시작되지 않습니다.");
+            qrResult.textContent = "오프라인 모드: Firebase 연결 비활성화됨";
         }
     } else { 
         // 다른 화면으로 이동 시 웹캠 중지
@@ -136,9 +125,10 @@ function showScreen(screenToShow) {
 
 // --- 웹캠 시작 함수 (수정됨) ---
 async function startWebcam() {
-    // Firebase가 비활성화된 경우 웹캠 시작하지 않음
-    if (!database) {
-        qrResult.textContent = 'Firebase 비활성화 모드. QR 스캔 불가.';
+    // Firebase 연결이 비활성화되어 있으면 웹캠 시작을 막음
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        console.warn("Firebase 연결이 비활성화되어 웹캠을 시작할 수 없습니다.");
+        qrResult.textContent = "Firebase 연결 비활성화. 웹캠 사용 불가.";
         return;
     }
 
@@ -153,18 +143,16 @@ async function startWebcam() {
         qrVideo.srcObject = stream;
         qrVideo.setAttribute('playsinline', true); 
         
-        // 비디오 메타데이터가 로드될 때까지 기다린 후 재생
         await new Promise(resolve => {
             qrVideo.onloadedmetadata = () => {
                 resolve();
             };
-            // 타임아웃 추가: 특정 시간 내에 메타데이터 로드 안 되면 실패로 간주
             setTimeout(() => {
-                if (!qrVideo.onloadedmetadata) { // 이미 resolve되지 않았다면
+                if (!qrVideo.onloadedmetadata) { 
                     console.warn('Metadata timeout for QR video.');
-                    resolve(); // 강제로 resolve하여 다음 단계로 진행 (그러나 실제 재생 실패 가능성 높음)
+                    resolve(); 
                 }
-            }, 3000); // 3초 타임아웃
+            }, 3000); 
         });
         
         qrVideo.play(); 
@@ -173,12 +161,10 @@ async function startWebcam() {
         isScanningPaused = false; 
         noCodeFoundCount = 0; 
 
-        // jsQR 라이브러리 로드 확인 후 tick 시작
         if (typeof jsQR !== 'undefined') {
             requestAnimationFrame(tick);
         } else {
             console.warn('jsQR 라이브러리가 아직 로드되지 않았습니다. 잠시 후 다시 시도합니다.');
-            // jsQR 로드가 지연될 경우를 대비
             setTimeout(() => {
                 if (typeof jsQR !== 'undefined') {
                     requestAnimationFrame(tick);
@@ -196,17 +182,8 @@ async function startWebcam() {
     }
 }
 
-// --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) (수정됨) ---
+// --- QR 코드 스캔 로직 (jsQR 라이브러리 사용) (수정 없음) ---
 function tick() {
-    // Firebase가 비활성화된 경우 스캔 중지
-    if (!database) {
-        if (qrVideo.srcObject && !qrVideo.paused) {
-            qrVideo.pause();
-        }
-        qrResult.textContent = 'Firebase 비활성화 모드. QR 스캔 불가.';
-        return;
-    }
-
     // 1. 관리자 모드이거나 스캔이 일시 정지된 상태면 스캔을 중단하고 비디오를 멈춤
     if (isAdminMode || isScanningPaused) { 
         if (qrVideo.srcObject && !qrVideo.paused) {
@@ -299,8 +276,10 @@ function tick() {
 
 // --- 스캔된 QR 데이터 처리 함수 ---
 async function processQRData(data) {
-    if (!database) { // Firebase가 비활성화된 경우 실행하지 않음
-        qrResult.textContent = 'Firebase 비활성화 모드. 스탬프 처리 불가.';
+    // Firebase 연결이 비활성화되어 있으면 데이터 처리 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        qrResult.textContent = 'Firebase 연결 비활성화. 스탬프 처리 불가.';
+        console.warn("Firebase 연결이 비활성화되어 스탬프 데이터 처리를 건너뜝니다.");
         return;
     }
 
@@ -308,7 +287,7 @@ async function processQRData(data) {
 
     // 1. 접두사 유효성 검사
     if (!data.startsWith(VALID_QR_PREFIX)) {
-        qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다.';
+        qrResult.textContent = '❌ 유효하지 않은 QR 코드 형식입니다. (접두사 불일치)';
         console.warn('유효하지 않은 QR 코드 스캔: 접두사 불일치', data);
         return; 
     }
@@ -390,8 +369,8 @@ async function processQRData(data) {
 
 // --- 모든 스탬프 초기화 함수 (관리자 모드에서만 사용) ---
 async function resetAllStamps() {
-    if (!database) { // Firebase가 비활성화된 경우 실행하지 않음
-        alert('Firebase가 비활성화되어 스탬프 초기화 기능을 사용할 수 없습니다.');
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        alert('Firebase 연결 비활성화. 스탬프 초기화 불가.');
         return;
     }
     if (confirm('경고: 모든 스탬프를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
@@ -404,7 +383,6 @@ async function resetAllStamps() {
         try {
             await remove(ref(database, `stamps/${currentStudentId}`)); 
             await remove(ref(database, `votes/${currentStudentId}`)); 
-            // hasTenStamps 필드도 초기화
             await update(ref(database, `students/${currentStudentId}`), { hasTenStamps: null }); 
 
             stampImages.forEach(stamp => {
@@ -422,14 +400,20 @@ async function resetAllStamps() {
 
 // --- 페이지 로드 시 스탬프 상태 복원 함수 ---
 async function loadStampState() {
+    // Firebase 연결이 비활성화되어 있으면 데이터 로드 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        stampImages.forEach(stamp => stamp.classList.add('hidden'));
+        console.warn("Firebase 연결 비활성화. 스탬프 상태 로드 건너뜀.");
+        return;
+    }
+    
     const currentStudentId = localStorage.getItem('currentStudentId');
-    if (!currentStudentId || !database) { // database가 null이면 Firebase 연동 기능 건너뛰기
+    if (!currentStudentId) {
         stampImages.forEach(stamp => stamp.classList.add('hidden'));
         return;
     }
 
     try {
-        // 모든 스탬프 이미지를 숨긴 후, 데이터베이스 상태에 따라 다시 표시
         stampImages.forEach(stamp => stamp.classList.add('hidden')); 
 
         const snapshot = await get(ref(database, `stamps/${currentStudentId}`));
@@ -453,8 +437,15 @@ async function loadStampState() {
 
 // --- 10개 스탬프 획득 시 메시지 표시/숨김 및 투표 기능 ---
 async function checkTenStamps() {
+    // Firebase 연결이 비활성화되어 있으면 기능 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        tenStampsMessage.classList.add('hidden');
+        console.warn("Firebase 연결 비활성화. 10개 스탬프 체크 건너뜀.");
+        return;
+    }
+
     const currentStudentId = localStorage.getItem('currentStudentId');
-    if (!currentStudentId || !database) { // database가 null이면 Firebase 연동 기능 건너뛰기
+    if (!currentStudentId) {
         tenStampsMessage.classList.add('hidden');
         return;
     }
@@ -478,13 +469,11 @@ async function checkTenStamps() {
         if (stampedCount >= 10) {
             tenStampsMessage.classList.remove('hidden');
             
-            // 10개 이상 스탬프를 찍었을 경우 학생 데이터에 '출석인정' 상태 업데이트
             if (studentData && studentData.hasTenStamps !== "출석인정") {
                 await update(studentRef, { hasTenStamps: "출석인정" });
                 console.log(`학생 ${currentStudentId}의 출석이 인정되었습니다.`);
             }
 
-            // 투표 상태 확인 및 UI 업데이트
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             const votedClub = voteSnapshot.val();
 
@@ -501,12 +490,10 @@ async function checkTenStamps() {
             }
         } else {
             tenStampsMessage.classList.add('hidden');
-            // 10개 미만으로 스탬프를 찍었을 경우 '출석인정' 상태 제거
             if (studentData && studentData.hasTenStamps === "출석인정") {
                 await remove(ref(database, `students/${currentStudentId}/hasTenStamps`));
                 console.log(`학생 ${currentStudentId}의 출석인정 상태가 취소되었습니다.`);
             }
-            // 투표 관련 UI 초기화 및 비활성화
             bestClubVoteStatus.textContent = '';
             bestClubInput.value = '';
             bestClubInput.disabled = true;
@@ -520,10 +507,12 @@ async function checkTenStamps() {
 
 // 투표 버튼 클릭 이벤트 리스너
 submitBestClubBtn.addEventListener('click', async () => {
-    if (!database) { // Firebase가 비활성화된 경우 실행하지 않음
-        alert('Firebase가 비활성화되어 투표 기능을 사용할 수 없습니다.');
+    // Firebase 연결이 비활성화되어 있으면 기능 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        alert('Firebase 연결 비활성화. 투표 불가.');
         return;
     }
+
     const clubName = bestClubInput.value.trim();
     const currentStudentId = localStorage.getItem('currentStudentId');
 
@@ -534,34 +523,28 @@ submitBestClubBtn.addEventListener('click', async () => {
 
     if (clubName) {
         try {
-            // 이미 투표했는지 확인
             const voteSnapshot = await get(ref(database, `votes/${currentStudentId}`));
             if (voteSnapshot.exists()) {
                 alert('이미 투표하셨습니다. 투표는 한 번만 가능합니다.');
                 return;
             }
 
-            // 유효한 동아리 이름인지 확인
-            // 투표 가능한 동아리 이름은 TOTAL_CLASSES까지이므로 CLUB_NAMES의 첫 요소를 제외하고 검사
-            const validClubNamesForVote = CLUB_NAMES.slice(1, TOTAL_CLASSES + 1); // 1번부터 TOTAL_CLASSES번까지
+            const validClubNamesForVote = CLUB_NAMES.slice(1, TOTAL_CLASSES + 1); 
             if (!validClubNamesForVote.includes(clubName)) {
                 alert('유효하지 않은 동아리 이름입니다. 정확한 이름을 입력해주세요.');
                 return;
             }
 
-            // 투표 확인 컨펌
             if (confirm(`${clubName}에 투표하시겠습니까? (투표는 한 번만 가능합니다)`)) {
-                // 학생별 투표 기록
                 await set(ref(database, `votes/${currentStudentId}`), clubName);
                 
-                // 동아리별 투표 수 증가 (트랜잭션으로 동시성 문제 방지)
                 const clubVotesRef = ref(database, `clubVotes/${clubName}`);
                 await runTransaction(clubVotesRef, (currentVotes) => {
                     return (currentVotes || 0) + 1;
                 });
 
                 alert(`"${clubName}"에 투표해주셔서 감사합니다!`);
-                checkTenStamps(); // 투표 상태 UI 업데이트
+                checkTenStamps(); 
             }
         } catch (error) {
             console.error("Firebase 투표 저장 실패:", error);
@@ -574,31 +557,30 @@ submitBestClubBtn.addEventListener('click', async () => {
 
 
 // --- 관리자 모드 관련 함수 ---
+// 관리자 모드 함수들에도 ENABLE_FIREBASE_CONNECTION || !database 체크를 추가하여
+// Firebase 비활성화 시 작동하지 않도록 할 수 있습니다. (필요에 따라 추가)
 
 function showAdminControls() {
     isAdminMode = true; 
     isScanningPaused = true; 
 
-    controlsDiv.innerHTML = ''; // 기존 버튼 모두 제거
+    controlsDiv.innerHTML = ''; 
 
-    // 각 동아리별 스탬프 제어 버튼 생성
     for (let i = 1; i <= TOTAL_CLASSES; i++) {
         const classButton = document.createElement('button');
         classButton.textContent = `${CLUB_NAMES[i]} 스탬프 제어`; 
         classButton.classList.add('class-control-button');
-        classButton.dataset.class = i; // 데이터 속성으로 동아리 번호 저장
+        classButton.dataset.class = i; 
         classButton.addEventListener('click', handleClassStampControl);
         controlsDiv.appendChild(classButton);
     }
     
-    // 관리자 모드 종료 버튼
     const exitAdminButton = document.createElement('button');
     exitAdminButton.textContent = '관리자 모드 종료';
     exitAdminButton.addEventListener('click', exitAdminMode);
     controlsDiv.appendChild(exitAdminButton);
 
     qrResult.textContent = '관리자 모드: 원하는 동아리를 선택하세요.';
-    // 관리자 모드 진입 시 확실히 비디오를 멈춤
     if (qrVideo.srcObject && !qrVideo.paused) { 
         qrVideo.pause(); 
     }
@@ -606,8 +588,8 @@ function showAdminControls() {
 
 function showMasterControls() {
     isMasterMode = true;
-    isAdminMode = true; // 마스터 모드도 관리자 모드의 일종
-    isScanningPaused = true; // 스캔 일시 정지 유지
+    isAdminMode = true; 
+    isScanningPaused = true; 
     controlsDiv.innerHTML = '';
 
     qrResult.textContent = 'MASTER KEY 활성화: 모든 스탬프를 제어할 수 있습니다.';
@@ -632,16 +614,16 @@ function showMasterControls() {
     }
 }
 
-// 각 동아리 스탬프 제어 버튼 클릭 핸들러
 async function handleClassStampControl(event) {
-    if (!database) { // Firebase가 비활성화된 경우 실행하지 않음
-        alert('Firebase가 비활성화되어 스탬프 제어 기능을 사용할 수 없습니다.');
+    // Firebase 연결이 비활성화되어 있으면 기능 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        alert('Firebase 연결 비활성화. 스탬프 제어 불가.');
         return;
     }
+
     const classNumber = event.target.dataset.class;
     const password = prompt(`${CLUB_NAMES[classNumber]} 비밀번호를 입력하세요:`); 
 
-    // 마스터 키 확인 (특정 동아리 번호와 연동)
     if (classNumber === '10' && password === MASTER_KEY) { 
         showMasterControls();
         return;
@@ -649,7 +631,7 @@ async function handleClassStampControl(event) {
 
     if (password === CLASS_PASSWORDS[classNumber]) {
         const stampIndex = classNumber - 1;
-        const currentStamp = stampImages[stampIndex]; // 이미지는 stampImages에서 가져옴
+        const currentStamp = stampImages[stampIndex]; 
         const currentStudentId = localStorage.getItem('currentStudentId');
         const clubName = CLUB_NAMES[classNumber]; 
 
@@ -662,9 +644,8 @@ async function handleClassStampControl(event) {
             const stampPath = `stamps/${currentStudentId}/club${classNumber}`;
             const stampSnapshot = await get(ref(database, stampPath));
 
-            if (currentStamp) { // currentStamp가 존재하는지 확인
+            if (currentStamp) { 
                 if (!stampSnapshot.exists() || !stampSnapshot.val()) { 
-                    // 스탬프가 찍히지 않았다면 새로 찍음
                     await set(ref(database, stampPath), true);
                     currentStamp.classList.remove('hidden');
                     qrResult.textContent = `✅ ${clubName} 스탬프가 관리자에 의해 찍혔습니다!`; 
@@ -672,7 +653,6 @@ async function handleClassStampControl(event) {
                     console.log(`${clubName} 스탬프 관리자 찍기 완료.`);
                     checkTenStamps(); 
                 } else { 
-                    // 이미 찍힌 스탬프라면 취소 여부 확인
                     if (confirm(`${clubName} 스탬프를 취소하시겠습니까?`)) { 
                         await remove(ref(database, stampPath));
                         currentStamp.classList.add('hidden');
@@ -695,12 +675,13 @@ async function handleClassStampControl(event) {
     }
 }
 
-// 모든 스탬프 채우기 함수
 async function fillAllStamps() {
-    if (!database) { // Firebase가 비활성화된 경우 실행하지 않음
-        alert('Firebase가 비활성화되어 모든 스탬프를 채울 수 없습니다.');
+    // Firebase 연결이 비활성화되어 있으면 기능 중지
+    if (!ENABLE_FIREBASE_CONNECTION || !database) {
+        alert('Firebase 연결 비활성화. 모든 스탬프 채우기 불가.');
         return;
     }
+
     if (confirm('모든 스탬프를 채우시겠습니까?')) {
         const currentStudentId = localStorage.getItem('currentStudentId');
         if (!currentStudentId) {
@@ -728,18 +709,16 @@ async function fillAllStamps() {
     }
 }
 
-// 관리자 모드 종료 함수
 function exitAdminMode() {
     isAdminMode = false;
     isMasterMode = false;
     isScanningPaused = false; 
     
-    controlsDiv.innerHTML = ''; // 관리자 버튼 숨기기
+    controlsDiv.innerHTML = ''; 
 
-    loadStampState(); // 현재 스탬프 상태 로드
+    loadStampState(); 
     qrResult.textContent = '관리자 모드를 종료했습니다. QR 코드를 스캔 중...';
     console.log('관리자 모드 종료.');
-    // 관리자 모드에서 나와 스캔을 재개할 때 비디오를 확실히 재생시키고 tick 호출
     if (qrVideo.srcObject && qrVideo.paused) { 
         qrVideo.play();
     }
@@ -749,40 +728,39 @@ function exitAdminMode() {
 
 // --- 이벤트 리스너 연결 ---
 submitInfoBtn.addEventListener('click', async () => {
-    // Firebase가 비활성화된 경우 학생 정보 저장을 막을 수 있습니다.
-    // 하지만 로컬 스토리지에만 저장하고 Firebase에 저장하지 않는 방식으로도 구현 가능합니다.
-    // 여기서는 Firebase에 저장하는 것이 주 목적이므로, Firebase 비활성 시 경고를 띄웁니다.
-    if (!database) {
-        alert('Firebase가 비활성화되어 학생 정보를 저장할 수 없습니다.');
-        return;
-    }
-
-    const grade = gradeInput.value.padStart(2, '0'); // 두 자리로 패딩
-    const classNum = classInput.value.padStart(2, '0'); // 두 자리로 패딩
-    const number = numberInput.value.padStart(2, '0'); // 두 자리로 패딩
+    const grade = gradeInput.value.padStart(2, '0'); 
+    const classNum = classInput.value.padStart(2, '0'); 
+    const number = numberInput.value.padStart(2, '0'); 
     const name = nameInput.value.trim();
 
     if (grade && classNum && number && name) {
-        const studentId = `${grade}-${classNum}-${number}`; // 학번 형식 통일
+        const studentId = `${grade}-${classNum}-${number}`; 
 
-        try {
-            // 학생 정보 저장 또는 업데이트
-            await set(ref(database, `students/${studentId}`), {
-                grade: grade,
-                classNum: classNum,
-                number: number,
-                name: name,
-                hasTenStamps: null // 초기에는 10개 스탬프 상태 없음
-            });
-            // 기존 투표 정보 초기화 (새로운 학생 등록 시)
-            await remove(ref(database, `votes/${studentId}`));
+        // Firebase 연결이 비활성화되어 있으면 데이터 저장 건너뜀
+        if (ENABLE_FIREBASE_CONNECTION && database) {
+            try {
+                await set(ref(database, `students/${studentId}`), {
+                    grade: grade,
+                    classNum: classNum,
+                    number: number,
+                    name: name,
+                    hasTenStamps: null 
+                });
+                await remove(ref(database, `votes/${studentId}`));
 
-            localStorage.setItem('currentStudentId', studentId); // 로컬 스토리지에 학번 저장
+                localStorage.setItem('currentStudentId', studentId); 
+                studentDisplay.textContent = `학번: ${grade}학년 ${classNum}반 ${number}번 | 이름: ${name}`;
+                showScreen(mainContentScreen); 
+            } catch (error) {
+                console.error("Firebase 학생 정보 저장 실패:", error);
+                alert("학생 정보 저장에 실패했습니다: " + error.message);
+            }
+        } else {
+            // Firebase 비활성화 시 로컬 스토리지에만 저장하고 경고
+            localStorage.setItem('currentStudentId', studentId); 
             studentDisplay.textContent = `학번: ${grade}학년 ${classNum}반 ${number}번 | 이름: ${name}`;
-            showScreen(mainContentScreen); // 메인 화면으로 전환
-        } catch (error) {
-            console.error("Firebase 학생 정보 저장 실패:", error);
-            alert("학생 정보 저장에 실패했습니다: " + error.message);
+            showScreen(mainContentScreen); 
+            alert('Firebase 연결이 비활성화되어 학생 정보가 데이터베이스에 저장되지 않고, 로컬에만 저장됩니다.');
         }
     } else {
         alert('모든 정보를 입력해주세요.');
@@ -793,7 +771,6 @@ showLocationGuideBtn.addEventListener('click', () => {
     showScreen(locationGuideScreen);
 });
 
-// 새로 추가된 진행 방법 안내 버튼 이벤트 리스너
 showHowToPlayBtn.addEventListener('click', () => { 
     showScreen(howToPlayScreen); 
 });
@@ -802,7 +779,6 @@ closeLocationGuideBtn.addEventListener('click', () => {
     showScreen(mainContentScreen);
 });
 
-// 새로 추가된 진행 방법 안내 화면 닫기 버튼 이벤트 리스너
 closeHowToPlayBtn.addEventListener('click', () => { 
     showScreen(mainContentScreen); 
 });
@@ -810,50 +786,34 @@ closeHowToPlayBtn.addEventListener('click', () => {
 
 // 초기 로드 시 스플래시 화면 표시 및 학생 정보 로드
 window.addEventListener('load', async () => {
-    // Firebase Database 인스턴스가 전역으로 노출되어 있는지 확인 (ENABLE_FIREBASE_CONNECTION이 true일 경우)
-    // database 변수는 이미 상단에서 초기화되었거나 null로 설정되었으므로 이 부분은 필요 없음
-    // 다만, 다른 스크립트에서 window.database를 사용한다면 유지합니다.
-    
-    // 이 시점에서 `database` 변수는 이미 `ENABLE_FIREBASE_CONNECTION` 설정에 따라 초기화되었거나 `null`입니다.
-    // 따라서 별도의 `window.database` 확인 로직은 필요 없습니다.
-    // if (!database) { // 이 체크는 필요에 따라 유지할 수 있으나, 이미 전역에서 database가 null이면 실행되지 않음
-    //     console.error("Firebase Database가 비활성화되어, 일부 기능이 제한됩니다.");
-    //     // alert("앱 초기화 중 오류가 발생했습니다. index.html에서 Firebase 설정 및 초기화를 확인해주세요.");
-    //     // return; 
-    // }
-
     const currentStudentId = localStorage.getItem('currentStudentId');
 
     if (currentStudentId) {
-        // Firebase가 활성화된 경우에만 학생 정보를 Firebase에서 로드 시도
-        if (database) { 
+        // Firebase 연결이 활성화되어 있을 때만 데이터 로드 시도
+        if (ENABLE_FIREBASE_CONNECTION && database) {
             try {
-                // 저장된 학생 정보가 있다면 로드하여 메인 화면으로 이동
                 const snapshot = await get(ref(database, `students/${currentStudentId}`));
                 const studentData = snapshot.val();
                 if (studentData) {
                     studentDisplay.textContent = `학번: ${studentData.grade}학년 ${studentData.classNum}반 ${studentData.number}번 | 이름: ${studentData.name}`;
                     showScreen(mainContentScreen);
                 } else {
-                    // 정보가 없으면 로컬 스토리지 정보 삭제 및 스플래시 화면 표시
                     localStorage.removeItem('currentStudentId'); 
                     showScreen(splashScreen);
                 }
             } catch (error) {
                 console.error("Firebase 학생 정보 로드 실패:", error);
-                // 오류 발생 시 로컬 스토리지 정보 삭제 및 스플래시 화면 표시
                 localStorage.removeItem('currentStudentId');
                 showScreen(splashScreen);
             }
         } else {
-            // Firebase가 비활성화된 경우, 로컬 스토리지에만 저장된 정보가 있더라도
-            // Firebase와 연동되는 기능은 사용할 수 없으므로 스플래시 화면으로 이동.
-            // 필요에 따라 Firebase 없이 동작하는 '오프라인' 모드 로직을 추가할 수도 있습니다.
-            console.warn("Firebase 비활성화 모드입니다. 저장된 학생 정보 로드를 건너뜝니다.");
+            // Firebase 비활성화 시에는 로컬 스토리지 정보만으로 진행
+            // 여기서는 이름을 알 수 없으므로, splashScreen으로 보냅니다.
+            studentDisplay.textContent = `학번: ${currentStudentId} (정보 로드 불가)`;
             showScreen(splashScreen);
+            alert('Firebase 연결이 비활성화되어 학생 정보 로드가 제한됩니다.');
         }
     } else {
-        // 저장된 학생 정보가 없으면 스플래시 화면 표시
         showScreen(splashScreen);
     }
 });

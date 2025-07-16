@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>동아리 큐알 프로그램</title>
+    <title>동아리 스탬프 랠리</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,19 +23,19 @@
 
     <div id="main-content" class="screen hidden">
         <div class="header">
-            <h2>큐알 프로그램</h2>
+            <h2>스탬프 랠리</h2>
             <p id="student-display">학번: 이름:</p>
         </div>
         
         <div class="qr-scanner-container">
             <video id="qr-video" playsinline></video>
             <p id="qr-result">QR 코드를 스캔 중...</p>
-            <p class="refresh-guide-message">인식이 잘 안 된다면 새로고침 꼭 해보세요!</p>
+            <p class="refresh-guide-message">오랫동안 인식해도 안 된다면 새로고침(F5) 해보세요!</p>
         </div>
 
         <div id="ten-stamps-message" class="message-box hidden">
             <p>🎉 축하합니다! 스탬프 10개를 모두 모았습니다!</p>
-            <p>본인이 생각하기에 가장 준비 잘한 동아리에 투표해주세요!</p>
+            <p>최고의 동아리에 투표해주세요!</p>
             <input type="text" id="bestClubInput" placeholder="투표할 동아리 이름 입력">
             <button id="submitBestClubBtn">투표하기</button>
             <p id="bestClubVoteStatus"></p>
@@ -102,7 +102,7 @@
                 <img src="./images/stamp_base.png" alt="specialbooth 스탬프" class="stamp hidden" id="stamp-15">
                 <span class="club-name">specialbooth</span>
             </div>
-            </div>
+        </div>
 
         <div class="controls">
         </div>
@@ -117,7 +117,7 @@
         <h2>동아리 위치 안내</h2>
         <div class="guide-image-container">
             <img src="./images/club_locations_map.jpg" alt="모든 동아리 위치 안내 지도">
-            <p>* 새로고침해도 오류 발생하면 카톡 오픈채팅방 '운남고 큐알시스템 오류발생시'검색해서 해결할 수 있습니다.</p>
+            <p>* 위 이미지는 전체 동아리 위치 안내 지도입니다. 실제 위치는 변경될 수 있습니다.</p>
         </div>
         <button id="closeLocationGuideBtn">돌아가기</button>
     </div>
@@ -126,34 +126,12 @@
         <h2>진행 방법 안내</h2>
         <div class="guide-image-container">
             <img src="./images/how_to_play_guide.jpg" alt="스탬프 랠리 진행 방법">
-            <p>* 새로고침해도 오류 발생하면 카톡 오픈채팅방 '운남고 큐알시스템 오류발생시'검색해서 박현민에게 현재상황 알려주시면 됩니다.</p>
+            <p>* 궁금한 점은 운영 본부에 문의해주세요.</p>
         </div>
         <button id="closeHowToPlayBtn">돌아가기</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.0.0/dist/jsQR.min.js"></script>
-    
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyC419ExHmhVeUgZZ8OczKs0-wxjRe9r98A",
-            authDomain: "qr-presentation.firebaseapp.com",
-            projectId: "qr-presentation",
-            databaseURL: "https://qr-presentation-default-rtdb.firebaseio.com/", 
-            storageBucket: "qr-presentation.firebasestorage.app",
-            messagingSenderId: "798088889839",
-            appId: "1:798088889839:web:680bdd77ab61bb99a0e21a",
-            measurementId: "G-PV8FER69EM" 
-        };
-
-        const app = initializeApp(firebaseConfig);
-        window.database = getDatabase(app); 
-
-        console.log("Firebase 앱 및 Realtime Database 초기화 완료.");
-        console.log("Firebase Database 인스턴스:", window.database);
-    </script>
     <script type="module" src="script.js"></script>
 </body>
 </html>
