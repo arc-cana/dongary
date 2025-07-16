@@ -38,7 +38,7 @@ let database;
 
 // --- 개발/디버깅을 위한 Firebase 연결 활성화/비활성화 플래그 ---
 // 이 값을 false로 바꾸면 Firebase 초기화 및 연결을 시도하지 않습니다.
-const ENABLE_FIREBASE_CONNECTION = true; 
+const ENABLE_FIREBASE_CONNECTION = false; 
 
 // --- Firebase 설정 (반드시 YOUR_API_KEY 등으로 변경하세요!) ---
 // 이 부분은 실제 Firebase 프로젝트 설정으로 채워져야 합니다.
